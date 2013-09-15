@@ -1,0 +1,85 @@
+Analyzing 10k Unpaired Runs
+========================================================
+
+This document outlines the analysis of the 
+**unpaired** metapop simulations for the sensitivity
+analysis project. 
+
+I have already run these simulations and need
+to include definitions and variable settings
+here. This is work to be done.
+
+## Set variables
+
+```{r}
+# Snowy Plover Project Directory
+snpl.project.dir <- '/media/AKCAKAYA2/Projects/SnowyPlover/'
+# SA Code directory
+sacode.snpl <- '/home/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
+# Command to start a RAMAS Metapop simulation in R
+metapop.cmd.prefix <- 'wine ~/Dropbox/RAMAS/MetapopCmd_Verbose.exe '
+```
+
+After running the *.mp simulations I have to check
+to see that all of the simulations actually ran.
+
+```{r, eval=FALSE}
+# First define a list of the *.mp files to run
+snpl.mp.files <- Sys.glob(paths="snpl*mp")
+# Every *.mp file that successfully ran should have
+# an associated scl file. So first, get all the 
+# scl files
+snpl.scl.files <- Sys.glob(paths="snpl*SCL")
+# String replace the SCL with mp
+snpl.mp.files.Done <- sub("SCL","mp",snpl.scl.files)
+# Use Set Operation setdiff to get a list of the
+# mp files that did not get run
+snpl.mp.files.ToRun <- setdiff(snpl.mp.files,snpl.mp.files.Done)
+# Run this list of *.mp files
+for ( snpl in snpl.mp.files.ToRun ){
+  # Concatenate metapop command
+  metapop.cmd <- paste( metapop.cmd.prefix, snpl, sep="" )
+  # Call Metatpop.exe
+  system( metapop.cmd )  
+}
+```
+After re-runs, extract data
+
+```{r}
+# Set working directory to be were the gentime program is
+setwd( sacode.snpl )
+
+# Make a vector of mp.files WITH full paths
+snpl.mp.files.full <- paste( snpl.project.dir, 'SampleSize_10000_UNPAIRED_SA1/', snpl.mp.files, sep='' )
+                             
+# Name of resout.csv file
+res.out.file <- '/home/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/snpl.10000.UNPAIRED.csv'
+
+# Call mult results function
+mp.mult.results.snpl(mp.file.list=snpl.mp.files.full, 
+                     out.csv=res.out.file,
+                     spatial=TRUE,
+                     mac=TRUE)
+```
+
+Having run the extraction, I realized that I lost
+all information regarding whether the *.mp file was
+associated with 2m SLR or No SLR. So I have to
+run through all of the mp again, and get a vector
+of that information. I can do this by doing a `grepl`
+search on the kch change file name for '2M'.
+
+```{r}
+slr <- c()
+for ( snpl in snpl.mp.files.full ){
+  # Read the mp file
+  mp <- mp.read(as.character(snpl))
+  # Get the kch file names
+  kch.files <- mp$mp.file$PopData_df$KchangeSt
+  # classify as slr scenario or not
+  is.slr <- all(grepl('2M',kch.files))
+  # Add value of slr or no slr to `slr` vector
+  mp.slr <- ifelse( test=is.slr, yes='SLR', no='NoSLR' )
+  slr <- c( slr, mp.slr )
+}
+```

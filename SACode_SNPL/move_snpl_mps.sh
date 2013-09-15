@@ -1,0 +1,19 @@
+#! /bin/bash
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_2/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_2/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_3/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_3/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_4/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_4/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_5/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_5/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_6/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_6/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_7/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_7/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_8/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_8/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_9/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_9/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_10/FLSNPL_NoCC_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_10/FLSNPL_NoCC_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_2/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_2/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_3/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_3/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_4/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_4/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_5/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_5/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_6/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_6/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_7/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_7/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_8/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_8/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_9/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_9/FLSNPL_2M_Ceiling/
+cp /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_10/FLSNPL_2M_Ceiling/snpl_out/* /home/mlammens/Projects/SnowyPlover/SampleSize_1000_Rep/Unif_10/FLSNPL_2M_Ceiling/

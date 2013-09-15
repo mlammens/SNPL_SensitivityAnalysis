@@ -1,0 +1,376 @@
+mp.results <- function( mpFile, spatial=FALSE, mac=FALSE ) {
+# Calculate various endpoints from the results of an MP simulation as carried out in RAMAS
+# Use for Metapop version 5 and 5.1 file formats
+# Based on ResOut.exe program written by R. Akcakaya
+#
+# Author: Matthew Aiello-Lammens
+# Created: 9 January 2012
+# Update: 21 February 2012; 5 March 2012 (added spatial section)
+#
+# Args:
+#	mpFile: the full path name to the *.mp file to be examined
+#
+# Returns:
+#	res.summ.df: A data frame of the endpoints calculated
+#
+###################################################################################################
+# Check that *.mp file exists
+if ( !file.exists( mpFile ) ){
+	stop( paste( 'Did not find *.mp file:', mpFile) )
+}
+
+# Read *.mp file using mp.read.results.r.  If the file does not contain results
+# it will be reported in the read script.
+mp <- mp.read.results( mpFile )
+
+# Get the *.mp parameter inputs
+mp.in <- mp$mp.file[1:52]
+# Get the *.mp results
+mp.res <- mp$mp.file$results
+
+# Created Results Summary (res.summ) list and initiate with length = 0
+res.summ <- vector("list", length=0)
+
+##### BEGIN REPORT OF INPUT VALUES (Indpendent Variables) #####
+# ----------------------------------------------------------------------------------------------- #
+# Metapopulation Initial Abundance: Use only values that are 'included in sum'
+pop.initab <- mp.in$PopData_df$InitAbund
+pop.includeinsum <- mp.in$PopData_df$IncludeInSum
+res.summ$metapop.initab <- sum( pop.initab * pop.includeinsum )
+# Calculate 50% decline threshold - to be used later in the script
+Thr.50 <- res.summ$metapop.initab / 2
+# ----------------------------------------------------------------------------------------------- #
+# Call GenTime.exe to determine various calculations of generation time and eigen values
+if( mac ) {
+  # Development Notes: figured out a way to run GenTime on Mac or Linux if Wine is installed
+  #wine <- '/Applications/Wine.app/Contents/Resources/bin/wine' # Works for my Mac
+  wine <- 'wine'
+  # Assuming GenTime.exe is in same directory as scripts
+  gen.exe <- paste( sens.base.dir, 'GenTime.exe ', sep='')
+  gen.call <- paste( wine, gen.exe , '"', mpFile , '"' )
+  gen <- system( gen.call, intern=TRUE, ignore.stderr = TRUE )
+  gen <- strsplit( gen, " ")
+  gen <- unlist( lapply( gen, as.numeric ) )
+  res.summ$Gen.Abar <- gen[1]
+  res.summ$Gen.Mu1 <- gen[2]
+  res.summ$Gen.Tgen <- gen[3]
+  res.summ$EigenVal <- gen[4]
+} else {
+  # WARNING: This only works on a Windows system write now
+  gen.call <- paste( sens.base.dir,'GenTime ', '"', mpFile , '"',sep="" )
+  #print( paste('GenTime.exe called as: ', gen.call) ) ### DEBUG LINE
+  gen <- system( gen.call, intern = TRUE )
+  gen <- strsplit( gen, " ")
+  gen <- unlist( lapply( gen, as.numeric ) )
+  res.summ$Gen.Abar <- gen[1]
+  res.summ$Gen.Mu1 <- gen[2]
+  res.summ$Gen.Tgen <- gen[3]
+  res.summ$EigenVal <- gen[4]
+}
+
+# ----------------------------------------------------------------------------------------------- #
+# Density Dependence Factors
+#
+# Determine denisty type:
+# Is density dependence population specific? If yes, then determine dd.type from pop info,
+# if no, then dd.type is DDforAllPop value
+dd.pop.spec <- mp.in$PopSpecificDD
+if ( dd.pop.spec == 'Yes' ) {
+	dd.type.pop <- mp.in$PopData_df$DensDep
+	# If there is more than one dd.type in this vector, then report dd.type as mixed
+	if ( length(unique(dd.type.pop)) > 1 ) { 
+		dd.type <- 'Mixed'
+	} else { 
+		dd.type <- unique(dd.type.pop)
+	}
+} else if ( dd.pop.spec == 'No' ) {
+	dd.type <- mp.in$DDforAllPop
+	# If dd.type is user defined, also include DLL file
+	if ( dd.type == 'UD') {
+		dd.type <- paste( dd.type, mp.in$UserDllFileName )
+	}
+}
+res.summ$dd.type <- dd.type
+# ----------------------------------------------------------------------------------------------- #
+# Rmax values: Calculate the mean Rmax values over all poplations
+rmax.pop <- mp.in$PopData_df$MaxR
+res.summ$Rmax <- mean(rmax.pop)
+# ----------------------------------------------------------------------------------------------- #
+# Growth Rate: Based on density dependence type
+#
+# A vector of chars that define the different density types for which growth rate
+# would equal the eigen value of the stage matrix
+dd.eig <- c('EX','CE','EA','CA')
+# Set growth rate according to dd.type recorded
+if ( any( dd.type == dd.eig )) {
+	res.summ$GrowthRt <- res.summ$EigenVal
+} else {
+	# Assume that if dd.type is not in dd.eig, then use Rmax.  This will iclude
+	# user defined dd.type
+	res.summ$GrowthRt <- res.summ$Rmax
+}
+# ----------------------------------------------------------------------------------------------- #
+# Variability Metrics
+#
+# Get constraints matrix - 1 equals survival, 0 equals fecundity
+cons <- mp.in$ConstraintsMatr
+# Get st.dev matr
+SD.matr <- mp.in$SDMatr[[1]]$Matr
+# Get stage matrix
+St.matr <- mp.in$StMatr[[1]]$Matr
+# Seperate survival and fecundity elements of matrix
+surv.matr <- St.matr * cons
+fec.matr <- St.matr * (1-cons)
+# Calculate a variance matrix
+var.matr <- SD.matr^2
+# Average fecundity st.dev of all non-zero F values
+res.summ$fec.stdev.avg <- sqrt( mean( var.matr[ which( fec.matr > 0 ) ] ) )
+# Average survival st.dev of all non-zero S values
+res.summ$surv.stdev.avg <- sqrt( mean( var.matr[ which( surv.matr > 0 ) ] ) )
+# Average standard deviation, averaged over all non-zero matrix elements
+res.summ$stdev.avg <- sqrt( mean( var.matr[ which( St.matr > 0 ) ] ) )
+
+# Make a matrix of Co-efficient of Variation (CV) values
+# NOTE: Unlike the stdev calculated above, this is not completely acccurate below, but
+# a good enough approximation
+CV.matr <- SD.matr / St.matr
+# Average fecundity CV of all non-zero F values
+res.summ$fec.cv.avg <- mean( CV.matr[ which( fec.matr > 0 ) ] )
+# Average survival CV of all non-zero S values
+res.summ$surv.cv.avg <- mean( CV.matr[ which( surv.matr > 0 ) ] )
+# Average Coefficient of Variation (CV), averaged over all non-zero matrix elements
+res.summ$cv.avg <- mean( CV.matr[ which( St.matr > 0 ) ] )
+
+# ----------------------------------------------------------------------------------------------- #
+# Variation based on comparing abundance meterics at time step 10
+# First check that there are at least 10 time steps
+if ( mp.in$MaxDur > 10 ){
+	Nmax.10 <- mp.res$PopAll$Max[10]
+	Nmin.10 <- mp.res$PopAll$Min[10]
+	# Nmax/Nmin for average abundance for time step 10
+	res.summ$N.maxVmin.10 <- Nmax.10 / Nmin.10
+	# N(+1S.D.)/N(-1S.D.) for average abundance for time step 10
+	Nmean.10 <- mp.res$PopAll$Mean[10]
+	N10.plus.SD <- Nmean.10 + mp.res$PopAll$StDev[10]
+	N10.minus.SD <- Nmean.10 - mp.res$PopAll$StDev[10]
+	res.summ$N.plusVmin.SD <- N10.plus.SD / N10.minus.SD
+	# CV of N (calculated as (N(+1S.D) - N(-1S.D.)/(2*Navg), from Average Abundance 
+	# for time step 10)
+	res.summ$N.CV.10 <- (N10.plus.SD - N10.minus.SD)/(2*Nmean.10)
+	
+}
+# ----------------------------------------------------------------------------------------------- #
+# Determine age/stage of first reproduction
+#
+# The method used here is a bit complicated, but designed to accomidate
+# matrices in which not all fecundities are necessarily in the first row
+# of the stage matrix
+# Calculate column sums of fecundity matrix
+fec.vec <- colSums(fec.matr)
+# The first non-zero element of this vector corresponds to the first column with 
+# a fecundity value in the stage matrix, which corresponds to the first age/stage
+# of reproduction
+first.stage <- which( fec.vec > 0 )
+first.stage <- first.stage[1]
+res.summ$St.First.Rep <- first.stage
+# Name of age/stage of first reproduction
+res.summ$St.First.Rep.Name <- mp.in$StProp[[first.stage]]$StName
+
+##### BEGIN ENDPOINT CALCULATIONS (Dependent Variables) #####
+# ----------------------------------------------------------------------------------------------- #
+# Extinction Risk: Risk of total extinction by the final time step 
+#
+# Get the number of replications that resulted in 'extinction'
+ext.rep <- length( which( mp.res$Replications$Ter == 0 ) )
+# Exinction risk = (# reps resulting in extinction) / (total # of reps)
+res.summ$ext.risk <- ext.rep / mp.res$SimRep # SimRep is the number of replicaitons in this simulation
+# ----------------------------------------------------------------------------------------------- #
+# Threshold: The quasi-extinction threshold. Value set in Stochasticity section of MP Module.
+# Used to calculate time to quasi-extinction.
+res.summ$threshold <- mp.in$ExtinctThr
+# ----------------------------------------------------------------------------------------------- #
+# Prob(maxt): Risk of falling below the Threshold at least once by the final time step
+# Calculated using information regarding the time of first crossing of the extinction threshold
+res.summ$prob.thresh.maxt <- sum( mp.res$TimeCross$QuasiExtinct ) / mp.res$SimRep
+# ----------------------------------------------------------------------------------------------- #
+# MedTime: Median time to fall below the quasi-extinction threshold
+#
+# First calculate cumulative sum of TimeCross$QuasiExtinct / SimRep (i.e. the prob of first 
+# crossing the threshold at that time step)
+prob.cross <- cumsum( mp.res$TimeCross$QuasiExtinct / mp.res$SimRep )
+if ( any( prob.cross >= 0.5 ) ) { # Check if any values are greater than 0.5
+	# Get the minimum time-step for which the prob.cross is greater than or equal to 0.5. In most cases
+	# this will be an overestimate of the median time to quasi-extinction
+	#browser()
+	med.time.temp <- min( which(prob.cross >= 0.5) )
+	# Approximation for med.time if med.time.temp does not occur at exactly 0.5
+	if ( prob.cross[med.time.temp] != 0.5 ) {
+		med.time <- (0.5-prob.cross[med.time.temp-1])/(prob.cross[med.time.temp]-prob.cross[med.time.temp-1]) + (med.time.temp-1)
+	} else {
+		med.time <- med.time.temp
+	}
+	# Correct for the 'stepsize'
+	res.summ$med.time.cross <- med.time * mp.in$stepsize
+} else {
+	# If the median time to cross does not occur before the end of the simulation duration, 
+	# then set to the maximum simulation duration + 1 (as done in RAMAS ResultsOut)
+	res.summ$med.time.cross <- mp.in$MaxDur + 1
+}
+# ----------------------------------------------------------------------------------------------- #
+# Prob(50): Risk of falling below a population size of 50 individuals at least once by the final
+# time step
+res.summ$prob.50 <- length( which( mp.res$Replications$Min <= 50 ) ) / mp.res$SimRep
+# ----------------------------------------------------------------------------------------------- #
+# Prob(250): Risk of falling below a population size of 250 individuals at least once by the final
+# time step
+res.summ$prob.250 <- length( which( mp.res$Replications$Min <= 250 ) ) / mp.res$SimRep
+# ----------------------------------------------------------------------------------------------- #
+# Prob(1000): Risk of falling below a population size of 1000 individuals at least once by the final
+# time step
+res.summ$prob.1000 <- length( which( mp.res$Replications$Min <= 1000 ) ) / mp.res$SimRep
+# ----------------------------------------------------------------------------------------------- #
+# Prob(50%): Risk of falling below a population size of 50% the intial metapop size at least once 
+# by the final time step
+res.summ$prob.Thr.50 <- length( which( mp.res$Replications$Min <= Thr.50 ) ) / mp.res$SimRep
+# ----------------------------------------------------------------------------------------------- #
+# ExpMinN: Expected minimum total abundance (also known as EMA)
+res.summ$exp.min.n <- mean( mp.res$Replications$Min )
+# ----------------------------------------------------------------------------------------------- #
+# SdErr.ExpMinN: Standard error of EMA
+res.summ$sderr.ema <- sqrt( var( mp.res$Replications$Min ) ) / sqrt( mp.res$SimRep )
+# ----------------------------------------------------------------------------------------------- #
+# N(maxt): Mean metapopulation abundance at the final time step maxt
+# This value is the same as mp.res$PopAll$Mean( maxt )
+res.summ$n.mean <- mean( mp.res$Replications$Ter )
+# ----------------------------------------------------------------------------------------------- #
+# SD of N: Standard deviation of metapopulation occupancy at the final time step maxt
+# This value is the same as mp.res$PopAll$StDev( maxt )
+res.summ$n.stdev <- sqrt( var(mp.res$Replications$Ter) )
+# ----------------------------------------------------------------------------------------------- #
+# % Metapop Ab Change: Percent change in total metapopulation size compared to initial 
+# metapopulation size
+res.summ$metapop.chng <- ( res.summ$n.mean - res.summ$metapop.initab ) / res.summ$metapop.initab
+# ----------------------------------------------------------------------------------------------- #
+# Occ(maxt): Mean metapopulation occupance at the final time step maxt
+res.summ$occ.maxt <- mp.res$Occupancy$Mean[ mp.in$MaxDur ]
+# ----------------------------------------------------------------------------------------------- #
+# SD of Occ: Standard deviation of metapopulation occupancy at the final time step maxt
+res.summ$occ.stdev.maxt <- mp.res$Occupancy$StDev[ mp.in$MaxDur ]
+# ----------------------------------------------------------------------------------------------- #
+# Quantiles of Terminal Population Trajectory.  5%, 25%, 50%, 75%, and 95% quantiles
+quants <- quantile( mp.res$Replications$Ter, prob = c(0.05, 0.25, 0.50, 0.75, 0.95) )
+res.summ$quant.05 <- quants[1]
+res.summ$quant.25 <- quants[2]
+res.summ$quant.50 <- quants[3]
+res.summ$quant.75 <- quants[4]
+res.summ$quant.95 <- quants[5]
+# ----------------------------------------------------------------------------------------------- #
+# Harvest Results: Average total harvest, St.Dev. of total harvest, Minimum of total harvest
+# Maximum of total harvest
+res.summ$harv.avg <- mp.res$HarvestTot$Mean
+res.summ$harv.stdev <- mp.res$HarvestTot$StDev
+res.summ$harv.min <- mp.res$HarvestTot$Min
+res.summ$harv.max <- mp.res$HarvestTot$Max
+
+# ----------------------------------------------------------------------------------------------- #
+###################################################################################################
+#### Begin section concering Spatial Endpoints ####
+# NOTE: Incorrect indentation for this 'if' statement
+if ( spatial ) {
+  # ----------------------------------------------------------------------------------------------- #
+  # Dispersal Measures from Dispersal Distance Function
+  # 
+  # Use Dispersal Distance Function?
+  res.summ$use.disp.dist.func <- mp.in$UseDispDistFunc
+  # Get average dispersal distance, b value from Disp. Dist. Func.
+  res.summ$avg.disp.dist.b <- mp.in$DispDistFunc[2]
+  # Get max dispersal distance, Dmax value from Disp. Dist. Func.
+  res.summ$max.disp.dist.Dmax <- mp.in$DispDistFunc[4]
+  # ----------------------------------------------------------------------------------------------- #
+  # Dispersal Measures from Dispersal Matrix
+  #
+  # Define a new variable that is the dispersal matrix to make code clearer
+  disp.matr <- mp.in$DispMatr
+  # Average total dispersal rate (dispersal matrix: sum of each column, averaged over columns)
+  #
+  # We will consider dispersal for only those populations that exist at time-step zero 
+  # Determine pops that exist at time-step zero
+  pops.t0 <- which( mp.in$PopData_df$K > 0 )
+  # Define this smaller dispersal matrix
+  disp.matr.sub <- disp.matr[pops.t0,pops.t0]
+  # Take the sum of each column, this is essentially the percent of individuals that leave a 
+  # given population
+  disp.t0.colSums <- apply( disp.matr.sub, 2, sum)
+  # Mean dispersal (from a population) rate
+  res.summ$mean.t0.disp.rate <- mean( disp.t0.colSums )
+  # Lower and Upper quartile of total dispersal rate
+  disp.t0.rate.quant <- quantile( disp.t0.colSums, prob = c(0.25,0.75) )
+  res.summ$loquart.t0.disp.rate <- disp.t0.rate.quant[1]
+  res.summ$hiquart.t0.disp.rate <- disp.t0.rate.quant[2]
+  
+  # We will now consider dispersal for only those populations with non-zero initial abundance
+  # and  that exist at time-step zero 
+  # Determine pops with initial abundance greater than 0 at time-step zero
+  pops.t0.Ngt0 <- which( mp.in$PopData_df$InitAbund > 0 )
+  # Mean dispersal (from a population) rate
+  res.summ$mean.t0.Ngt0.disp.rate <- mean( disp.t0.colSums[ pops.t0.Ngt0 ] )
+  # Lower and Upper quartile of total dispersal rate
+  disp.t0.Ngt0.rate.quant <- quantile( disp.t0.colSums[ pops.t0.Ngt0 ], prob = c(0.25,0.75) )
+  res.summ$loquart.t0.Ngt0.disp.rate <- disp.t0.Ngt0.rate.quant[1]
+  res.summ$hiquart.t0.Ngt0.disp.rate <- disp.t0.Ngt0.rate.quant[2]
+  
+  # Average dispersal rate to nearest neighbor (assume that max dispersal in each column is
+  # to nearest neighbor)
+  disp.matr.colMax <- apply( disp.matr.sub, 2, max )
+  res.summ$mean.t0.nearest.disp.rate <- mean( disp.matr.colMax )
+  # Lower and Upper quartile of nearest neighbor dispersal rate
+  nearest.disp.rate.quant <- quantile( disp.matr.colMax, prob = c(0.25,0.75) )
+  res.summ$loquart.t0.nearest.disp.rate <- nearest.disp.rate.quant[1]
+  res.summ$hiquart.t0.nearest.disp.rate <- nearest.disp.rate.quant[2]
+  
+  # Average dispersal rate to nearest neighbor, conditioned on a non-zero
+  # initial population abundance
+  res.summ$mean.t0.Ngt0.nearest.disp.rate <- mean( disp.matr.colMax[ pops.t0.Ngt0 ] )
+  # Lower and Upper quartile of nearest neighbor dispersal rate
+  nearest.disp.rate.Ngt0.quant <- quantile( disp.matr.colMax[ pops.t0.Ngt0 ], prob = c(0.25,0.75) )
+  res.summ$loquart.t0.Ngt0.nearest.disp.rate <- nearest.disp.rate.Ngt0.quant[1]
+  res.summ$hiquart.t0.Ngt0.nearest.disp.rate <- nearest.disp.rate.Ngt0.quant[2]
+  
+  
+  # ----------------------------------------------------------------------------------------------- #
+  # Correlation Measures
+  #
+  # Use Correlation Distance Function?
+  res.summ$use.corr.dist.func <- mp.in$UseCorrDistFunc
+  # Average correlation distance, based on b value of corr. dist. func.
+  res.summ$avg.corr.dist.b <- mp.in$CorrDistFunc[2]
+  
+  # ----------------------------------------------------------------------------------------------- #
+} # End 'if (spatial)' statement
+
+# ----------------------------------------------------------------------------------------------- #
+# Additions that are specific to the snowy plover (SNPL) sensitivity analysis
+#
+# An important piece of information that is needed is which KCH scenario is used, Lo, Me, or Hi
+# Get name of first KCH file - all files should be the same
+kch.name <- as.character(mp.in$PopData_df$KchangeSt[1])
+# Split string by "_"
+kch.type <- unlist(strsplit(kch.name,split="_"))
+res.summ$kch.type <- kch.type[2]
+
+# Get Adult Survival Values and Fecundity (Juv Surv * Maternity) Values
+# These extractions are making some assumptions about the size of the stage matrix
+# that are particular to my simulation
+
+# Adult survival
+res.summ$ad.surv <- mp.in$StMatr[[1]]$Matr[4,4]
+
+# Fecundity (Juv Surv * Maternity)
+res.summ$fecund <- mp.in$StMatr[[1]]$Matr[1,4]
+
+# ----------------------------------------------------------------------------------------------- #
+###browser()
+res.summ.df <- as.data.frame(res.summ)
+row.names(res.summ.df) <- mpFile
+return(res.summ.df)
+}
