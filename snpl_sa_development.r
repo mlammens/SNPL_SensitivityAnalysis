@@ -104,8 +104,8 @@ length( which( abs(p50.nocc.tstat) <= abs( t.vals ) ) )/10000
 
 ## First work with the PartNum=10 case
 # Pick 10 random RepNumbers to work with
-reps.toUse <- sample(1:1000,10)
-#reps.toUse <- 1:1000 # This reps.toUse value used to look at all reps
+#reps.toUse <- sample(1:1000,10)
+reps.toUse <- 1:1000 # This reps.toUse value used to look at all reps
   # requires some changes to the code below too
 # Here I'm setting reps.toUse to a previously generated set of 10 reps
 # to be used **specifically** for Part.Num = 10
@@ -190,6 +190,9 @@ rand.type <- rep(c("Unif","LHS"),each=10000) # Change to each=10000 if using rep
 snpl.nn <- cbind( snpl.nn, rand.type )
 names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
 snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
+# Copy snpl.nn to snpl.nn.10
+snpl.nn.10
+snpl.nn.10$SampleSize <- 10
 # Plot these data
 snpl.nn.hist <- ggplot() + geom_histogram(aes(x=near.neighbor),data=snpl.nn) + facet_grid(RandType~RepNumber)
 
@@ -200,16 +203,20 @@ grid.arrange( snpl.bv, snpl.nn.hist )
 dev.off()
 
 ## Calculate means and standard deviations of the nearest neighbors
-snpl.nn.mean.10 <- tapply( snpl.nn$near.neighbor, 
-                        list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.mean.10 <- tapply( snpl.nn.10$near.neighbor, 
+                        list( snpl.nn.10$RepNumber, snpl.nn.10$RandType ), 
                         mean )
-snpl.nn.var.10 <- tapply( snpl.nn$near.neighbor, 
-                      list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.var.10 <- tapply( snpl.nn.10$near.neighbor, 
+                      list( snpl.nn.10$RepNumber, snpl.nn.10$RandType ), 
                       var )
 snpl.nn.mean.10.df <- melt(as.data.frame(snpl.nn.mean.10))
+snpl.nn.var.10.df <- melt(as.data.frame(snpl.nn.var.10))
 names(snpl.nn.mean.10.df) <- c('samp.type','near.neighbor')
+names(snpl.nn.var.10.df) <- c('samp.type','near.neighbor')
 ## Calculate the mean nearest neighbor across the 1000 sample sets
 apply(snpl.nn.mean.10,2,mean)
+apply(snpl.nn.var.10,2,mean)
+apply(snpl.nn.mean.10,2,sd)
 ## Calculate the coefficient of variation for this sample size
 apply(snpl.nn.mean.10,2,sd)/apply(snpl.nn.mean.10,2,mean)
 
@@ -218,7 +225,7 @@ snpl.nn.t.test.10 <- t.test(x=snpl.nn.mean.10[,1],y=snpl.nn.mean.10[,2])
 print(snpl.nn.t.test.10)
 
 ## Carry out an ANOVA
-snpl.nn.lm.10 <- lm( near.neighbor~RepNumber + RandType, data=snpl.nn)
+snpl.nn.lm.10 <- lm( near.neighbor~RepNumber * RandType, data=snpl.nn.10)
 anova(snpl.nn.lm.10)
 
 ## Make a plot
@@ -236,8 +243,8 @@ dev.off()
 reps.toUse <- sample(1:100,10)
 # Here I'm setting reps.toUse to a previously generated set of 10 reps
 # to be used **specifically** for Part.Num = 100
-reps.toUse <- c(2,10,31,39,54,72,84,88,92,96)
-# reps.toUse <- 1:100
+#reps.toUse <- c(2,10,31,39,54,72,84,88,92,96)
+reps.toUse <- 1:100
 # Get indices for these reps. Indices will be 
 # the same for each partition within PartNum sets
 get.rep <- function( RN ){ which( snpl.100.SA1.part$lhs.nocc$RepNumber == RN ) }
@@ -263,6 +270,7 @@ snpl.100.bivar.df <- rbind( snpl.100.SA2.part$lhs.nocc[ rep.ind, ],
 # Make bivariate plots
 snpl.bv <- ggplot( snpl.100.bivar.df, aes( ad.surv, fecund )) + geom_point() + facet_grid(RandType~RepNumber)
 
+## -------------------------------------------------------------------- ##
 ## Here's the *Nearest Neighbor* analysis for 10 repetitions 
 ## of the PartNum=100 dataset.
 # Make two empty data.frames
@@ -324,6 +332,9 @@ rand.type <- rep(c("Unif","LHS"),each=10000) # Change to 10000 if using all reps
 snpl.nn <- cbind( snpl.nn, rand.type )
 names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
 snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
+# Copy snpl.nn to snpl.nn.100
+snpl.nn.100 <- snpl.nn
+snpl.nn.100$SampleSize <- 100
 # Plot these data
 #snpl.nn.hist <- ggplot(aes(x=near.neighbor,fill=RandType),data=snpl.nn) + 
 #  geom_histogram(position="identity",alpha=0.5) + 
@@ -341,15 +352,19 @@ grid.arrange( snpl.bv, snpl.nn.hist )
 dev.off()
 
 ## Calculate means and standard deviations of the nearest neighbors
-snpl.nn.mean.100 <- tapply( snpl.nn$near.neighbor, 
-                        list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.mean.100 <- tapply( snpl.nn.100$near.neighbor, 
+                        list( snpl.nn.100$RepNumber, snpl.nn.100$RandType ), 
                         mean )
 snpl.nn.mean.100.df <- melt(as.data.frame(snpl.nn.mean.100))
 names(snpl.nn.mean.100.df) <- c('samp.type','near.neighbor')
-snpl.nn.var.100 <- tapply( snpl.nn$near.neighbor, 
-                      list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.var.100 <- tapply( snpl.nn.100$near.neighbor, 
+                      list( snpl.nn.100$RepNumber, snpl.nn.100$RandType ), 
                       var )
+snpl.nn.var.100.df <- melt(as.data.frame(snpl.nn.var.100))
+names(snpl.nn.var.100.df) <- c('samp.type','near.neighbor')
 ## Calculate the coefficient of variation for this sample size
+apply(snpl.nn.mean.100,2,mean)
+apply(snpl.nn.var.100,2,mean)
 apply(snpl.nn.mean.100,2,sd)/apply(snpl.nn.mean.100,2,mean)
 
 ## Carry out a  t-test on the means
@@ -357,7 +372,7 @@ snpl.nn.t.test <- t.test(x=snpl.nn.mean.100[,1],y=snpl.nn.mean.100[,2])
 print(snpl.nn.t.test)
 
 ## Carry out an ANOVA
-snpl.nn.lm.100 <- lm( near.neighbor~RepNumber + RandType, data=snpl.nn)
+snpl.nn.lm.100 <- lm( near.neighbor~RepNumber * RandType, data=snpl.nn.100)
 anova(snpl.nn.lm.100)
 
 ## Make a plot
@@ -400,6 +415,208 @@ p50.hist.2mSLR <- p50.hist.2mSLR + scale_x_continuous(breaks=seq(0,1,0.25))
 p50.hist.2mSLR
 
 grid.arrange( p50.hist, p50.hist.2mSLR )
+
+## -------------------------------------------------------------------- ##
+## -------------------------------------------------------------------- ##
+## Here's the *Nearest Neighbor* analysis for 10 repetitions 
+## of the PartNum=250 dataset.
+
+# Pick 10 random RepNumbers to work with
+reps.toUse <- sample(1:40,10)
+# Here I'm setting reps.toUse to a previously generated set of 10 reps
+# to be used **specifically** for Part.Num = 100
+#reps.toUse <- c(2,10,31,39,54,72,84,88,92,96)
+reps.toUse <- 1:40
+# Get indices for these reps. Indices will be 
+# the same for each partition within PartNum sets
+get.rep <- function( RN ){ which( snpl.250.SA1.part$lhs.nocc$RepNumber == RN ) }
+rep.ind <- sapply( reps.toUse, get.rep )
+rep.ind <- as.vector(rep.ind)
+
+# Make two empty data.frames
+snpl.nn.unif <- vector()
+snpl.nn.lhs <- vector()
+
+# Select input dimensions to use in nearest neighbor analysis
+input.dims <- c(2,10,11,63,64,62,48,61)
+
+for ( Rep in 1:length(reps.toUse) ){
+  # Get subsets of the LHS and Unif data
+  #  snpl.unif.rep <- subset( snpl.250.SA2.part$unif.nocc, subset=RepNumber==reps.toUse[Rep] )
+  #  snpl.lhs.rep <- subset( snpl.250.SA2.part$lhs.nocc, subset=RepNumber==reps.toUse[Rep] )
+  
+  snpl.unif.rep <- subset( snpl.250.SA1.part$unif.nocc, subset=RepNumber==reps.toUse[Rep] )
+  snpl.lhs.rep <- subset( snpl.250.SA1.part$lhs.nocc, subset=RepNumber==reps.toUse[Rep] )
+  ## Calculate distance matrix for all dimensions
+  # first convert kch.type to a numeric value
+  snpl.unif.rep$kch.type <- as.numeric(snpl.unif.rep$kch.type)
+  snpl.lhs.rep$kch.type <- as.numeric(snpl.lhs.rep$kch.type)
+  
+  # Get only input dims
+  snpl.unif.inputs <- cbind(snpl.unif.rep[input.dims])
+  snpl.lhs.inputs <- cbind(snpl.lhs.rep[input.dims])
+  
+  # Scale all inputs to be between 0 and 1 by dividing each 
+  # input by the max input value
+  snpl.unif.inputs.max <- apply(snpl.unif.inputs,MARGIN=2,FUN=max)
+  snpl.lhs.inputs.max <- apply(snpl.lhs.inputs,MARGIN=2,FUN=max)
+  # To do the division, use this little trick so the vector 
+  # cycling of the max vector lines up correctly with the inputs
+  # matrix
+  snpl.unif.inputs <- t(t(snpl.unif.inputs)/snpl.unif.inputs.max)
+  snpl.lhs.inputs <- t(t(snpl.lhs.inputs)/snpl.lhs.inputs.max)
+  
+  # Calculate distance matrices
+  #  dist.unif <- rdist( cbind(snpl.unif.rep$ad.surv, snpl.unif.rep$fecund) )
+  #  dist.lhs <- rdist( cbind(snpl.lhs.rep$ad.surv, snpl.lhs.rep$fecund) )
+  dist.unif <- as.matrix(dist(snpl.unif.inputs))
+  dist.lhs <- as.matrix(dist(snpl.lhs.inputs))
+  
+  # Set diagonal elements to NAs
+  diag(dist.unif) <- NA
+  diag(dist.lhs) <- NA
+  
+  # Calc Nearest Neighbor
+  near.neigh.unif <- apply( dist.unif, 2, min, na.rm=T )
+  near.neigh.lhs <- apply( dist.lhs, 2, min, na.rm=T)
+  
+  # Return as part of data.frame
+  snpl.nn.unif <- rbind( snpl.nn.unif, cbind(near.neigh.unif,rep(reps.toUse[Rep],250)) )
+  snpl.nn.lhs <- rbind( snpl.nn.lhs, cbind(near.neigh.lhs,rep(reps.toUse[Rep],250)) )
+}
+# Combine nearest neighbor data.frames
+snpl.nn <- rbind( snpl.nn.unif, snpl.nn.lhs )
+snpl.nn <- as.data.frame(snpl.nn)
+#rand.type <- rep(c("Unif","LHS"),each=1000) # Change to 10000 if using all reps
+rand.type <- rep(c("Unif","LHS"),each=10000) # Change to 10000 if using all reps
+snpl.nn <- cbind( snpl.nn, rand.type )
+names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
+snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
+# Copy snpl.nn to snpl.nn.250
+snpl.nn.250 <- snpl.nn
+snpl.nn.250$SampleSize <- 250
+
+## Calculate means and standard deviations of the nearest neighbors
+snpl.nn.mean.250 <- tapply( snpl.nn.250$near.neighbor, 
+                           list( snpl.nn.250$RepNumber, snpl.nn.250$RandType ), 
+                           mean )
+snpl.nn.var.250 <- tapply( snpl.nn.250$near.neighbor, 
+                          list( snpl.nn.250$RepNumber, snpl.nn.250$RandType ), 
+                          var )
+snpl.nn.mean.250.df <- melt(as.data.frame(snpl.nn.mean.250))
+snpl.nn.var.250.df <- melt(as.data.frame(snpl.nn.var.250))
+names(snpl.nn.mean.250.df) <- c('samp.type','near.neighbor')
+names(snpl.nn.var.250.df) <- c('samp.type','near.neighbor')
+## Calculate the mean nearest neighbor across the 25000 sample sets
+apply(snpl.nn.mean.250,2,mean)
+apply(snpl.nn.var.250,2,mean)
+apply(snpl.nn.mean.250,2,sd)
+## Calculate the coefficient of variation for this sample size
+apply(snpl.nn.mean.250,2,sd)/apply(snpl.nn.mean.250,2,mean)
+
+## Carry out an ANOVA
+snpl.nn.lm.250 <- lm( near.neighbor~RepNumber * RandType, data=snpl.nn.250)
+anova(snpl.nn.lm.250)
+
+## -------------------------------------------------------------------- ##
+## Here's the *Nearest Neighbor* analysis for 10 repetitions 
+## of the PartNum=250 dataset.
+
+# Pick 10 random RepNumbers to work with
+reps.toUse <- sample(1:20,10)
+# Here I'm setting reps.toUse to a previously generated set of 10 reps
+# to be used **specifically** for Part.Num = 100
+reps.toUse <- 1:20
+# Get indices for these reps. Indices will be 
+# the same for each partition within PartNum sets
+get.rep <- function( RN ){ which( snpl.500.SA1.part$lhs.nocc$RepNumber == RN ) }
+rep.ind <- sapply( reps.toUse, get.rep )
+rep.ind <- as.vector(rep.ind)
+
+# Make two empty data.frames
+snpl.nn.unif <- vector()
+snpl.nn.lhs <- vector()
+
+# Select input dimensions to use in nearest neighbor analysis
+input.dims <- c(2,10,11,63,64,62,48,61)
+
+for ( Rep in 1:length(reps.toUse) ){
+  # Get subsets of the LHS and Unif data
+  #  snpl.unif.rep <- subset( snpl.500.SA2.part$unif.nocc, subset=RepNumber==reps.toUse[Rep] )
+  #  snpl.lhs.rep <- subset( snpl.500.SA2.part$lhs.nocc, subset=RepNumber==reps.toUse[Rep] )
+  
+  snpl.unif.rep <- subset( snpl.500.SA1.part$unif.nocc, subset=RepNumber==reps.toUse[Rep] )
+  snpl.lhs.rep <- subset( snpl.500.SA1.part$lhs.nocc, subset=RepNumber==reps.toUse[Rep] )
+  ## Calculate distance matrix for all dimensions
+  # first convert kch.type to a numeric value
+  snpl.unif.rep$kch.type <- as.numeric(snpl.unif.rep$kch.type)
+  snpl.lhs.rep$kch.type <- as.numeric(snpl.lhs.rep$kch.type)
+  
+  # Get only input dims
+  snpl.unif.inputs <- cbind(snpl.unif.rep[input.dims])
+  snpl.lhs.inputs <- cbind(snpl.lhs.rep[input.dims])
+  
+  # Scale all inputs to be between 0 and 1 by dividing each 
+  # input by the max input value
+  snpl.unif.inputs.max <- apply(snpl.unif.inputs,MARGIN=2,FUN=max)
+  snpl.lhs.inputs.max <- apply(snpl.lhs.inputs,MARGIN=2,FUN=max)
+  # To do the division, use this little trick so the vector 
+  # cycling of the max vector lines up correctly with the inputs
+  # matrix
+  snpl.unif.inputs <- t(t(snpl.unif.inputs)/snpl.unif.inputs.max)
+  snpl.lhs.inputs <- t(t(snpl.lhs.inputs)/snpl.lhs.inputs.max)
+  
+  # Calculate distance matrices
+  #  dist.unif <- rdist( cbind(snpl.unif.rep$ad.surv, snpl.unif.rep$fecund) )
+  #  dist.lhs <- rdist( cbind(snpl.lhs.rep$ad.surv, snpl.lhs.rep$fecund) )
+  dist.unif <- as.matrix(dist(snpl.unif.inputs))
+  dist.lhs <- as.matrix(dist(snpl.lhs.inputs))
+  
+  # Set diagonal elements to NAs
+  diag(dist.unif) <- NA
+  diag(dist.lhs) <- NA
+  
+  # Calc Nearest Neighbor
+  near.neigh.unif <- apply( dist.unif, 2, min, na.rm=T )
+  near.neigh.lhs <- apply( dist.lhs, 2, min, na.rm=T)
+  
+  # Return as part of data.frame
+  snpl.nn.unif <- rbind( snpl.nn.unif, cbind(near.neigh.unif,rep(reps.toUse[Rep],500)) )
+  snpl.nn.lhs <- rbind( snpl.nn.lhs, cbind(near.neigh.lhs,rep(reps.toUse[Rep],500)) )
+}
+# Combine nearest neighbor data.frames
+snpl.nn <- rbind( snpl.nn.unif, snpl.nn.lhs )
+snpl.nn <- as.data.frame(snpl.nn)
+#rand.type <- rep(c("Unif","LHS"),each=1000) # Change to 10000 if using all reps
+rand.type <- rep(c("Unif","LHS"),each=10000) # Change to 10000 if using all reps
+snpl.nn <- cbind( snpl.nn, rand.type )
+names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
+snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
+# Copy snpl.nn to snpl.nn.250
+snpl.nn.500 <- snpl.nn
+snpl.nn.500$SampleSize <- 500
+
+## Calculate means and standard deviations of the nearest neighbors
+snpl.nn.mean.500 <- tapply( snpl.nn.500$near.neighbor, 
+                           list( snpl.nn.500$RepNumber, snpl.nn.500$RandType ), 
+                           mean )
+snpl.nn.var.500 <- tapply( snpl.nn.500$near.neighbor, 
+                          list( snpl.nn.500$RepNumber, snpl.nn.500$RandType ), 
+                          var )
+snpl.nn.mean.500.df <- melt(as.data.frame(snpl.nn.mean.500))
+snpl.nn.var.500.df <- melt(as.data.frame(snpl.nn.var.500))
+names(snpl.nn.mean.500.df) <- c('samp.type','near.neighbor')
+names(snpl.nn.var.500.df) <- c('samp.type','near.neighbor')
+## Calculate the mean nearest neighbor across the 50000 sample sets
+apply(snpl.nn.mean.500,2,mean)
+apply(snpl.nn.var.500,2,mean)
+apply(snpl.nn.mean.500,2,sd)
+## Calculate the coefficient of variation for this sample size
+apply(snpl.nn.mean.500,2,sd)/apply(snpl.nn.mean.500,2,mean)
+
+## Carry out an ANOVA
+snpl.nn.lm.500 <- lm( near.neighbor~RepNumber * RandType, data=snpl.nn.500)
+anova(snpl.nn.lm.500)
 
 ## **************************************************************##
 
@@ -481,6 +698,10 @@ rand.type <- rep(c("Unif","LHS"),each=10000)
 snpl.nn <- cbind( snpl.nn, rand.type )
 names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
 snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
+# Copy snpl.nn to snpl.nn.1000
+snpl.nn.1000 <- snpl.nn
+snpl.nn.1000$SampleSize <- 1000
+
 # Plot these data
 snpl.nn.hist <- ggplot() + geom_histogram(aes(x=near.neighbor),data=snpl.nn) + facet_grid(RandType~RepNumber)
 
@@ -492,22 +713,24 @@ grid.arrange( snpl.1000.bv, snpl.nn.hist )
 dev.off()
 
 ## Calculate means and standard deviations of the nearest neighbors
-snpl.nn.mean.1000 <- tapply( snpl.nn$near.neighbor, 
-                        list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.mean.1000 <- tapply( snpl.nn.1000$near.neighbor, 
+                        list( snpl.nn.1000$RepNumber, snpl.nn.1000$RandType ), 
                         mean )
 snpl.nn.mean.1000.df <- melt(as.data.frame(snpl.nn.mean.1000))
 names(snpl.nn.mean.1000.df) <- c('samp.type','near.neighbor')
-snpl.nn.var.1000 <- tapply( snpl.nn$near.neighbor, 
-                      list( snpl.nn$RepNumber, snpl.nn$RandType ), 
+snpl.nn.var.1000 <- tapply( snpl.nn.1000$near.neighbor, 
+                      list( snpl.nn.1000$RepNumber, snpl.nn.1000$RandType ), 
                       var )
 ## Calculate the coefficient of variation for this sample size
 apply(snpl.nn.mean.1000,2,sd)/apply(snpl.nn.mean.1000,2,mean)
+apply(snpl.nn.var.1000,2,mean)
+apply(snpl.nn.mean.1000,2,mean)
 
 ## Carry out a  t-test on the means
 snpl.nn.t.test.1000 <- t.test(x=snpl.nn.mean.1000[,1],y=snpl.nn.mean.1000[,2])
 print(snpl.nn.t.test.1000)
 ## Carry out an ANOVA
-snpl.nn.lm.1000 <- lm( near.neighbor~RepNumber + RandType, data=snpl.nn)
+snpl.nn.lm.1000 <- lm( near.neighbor~RepNumber * RandType, data=snpl.nn.1000)
 anova(snpl.nn.lm.1000)
 
 ## Make a plot
@@ -531,6 +754,44 @@ ema.delta.hist <- ggplot() + geom_histogram(aes(x=ema.delta),data=snpl.1000.samp
 
 grid.arrange( p50.hist, p50.delta.hist )
 grid.arrange( ema.hist, ema.delta.hist )
+
+## ******************************************************************** ##
+## Perform and ANOVA examing all sample sizes simultaneousl
+## ******************************************************************** ##
+#summary(snpl.nn.lm.10)
+snpl.nn.anova.10 <- anova(snpl.nn.lm.10)
+# Get Correct F-ratio and P val for RandType
+F_nn_10 <- snpl.nn.anova.10$'Mean Sq'[2]/snpl.nn.anova.10$'Mean Sq'[3]
+1-pf(F_nn_10,1,999)
+
+snpl.nn.anova.100 <- anova(snpl.nn.lm.100)
+# Get Correct F-ratio and P val for RandType
+F_nn_100 <- snpl.nn.anova.100$'Mean Sq'[2]/snpl.nn.anova.100$'Mean Sq'[3]
+1-pf(F_nn_100,1,99)
+
+snpl.nn.anova.250 <- anova(snpl.nn.lm.250)
+# Get Correct F-ratio and P val for RandType
+F_nn_250 <- snpl.nn.anova.250$'Mean Sq'[2]/snpl.nn.anova.250$'Mean Sq'[3]
+1-pf(F_nn_250,1,39)
+
+snpl.nn.anova.500 <- anova(snpl.nn.lm.500)
+snpl.nn.anova.500
+# Get Correct F-ratio and P val for RandType
+F_nn_500 <- snpl.nn.anova.500$'Mean Sq'[2]/snpl.nn.anova.500$'Mean Sq'[3]
+1-pf(F_nn_500,1,19)
+
+snpl.nn.anova.1000 <- anova(snpl.nn.lm.1000)
+snpl.nn.anova.1000
+F_nn_1000 <- snpl.nn.anova.1000$'Mean Sq'[2]/snpl.nn.anova.1000$'Mean Sq'[3]
+F_nn_1000
+1-pf(F_nn_1000,1,9)
+
+snpl.nn <- rbind( snpl.nn.10, snpl.nn.100, snpl.nn.250,
+                  snpl.nn.500, snpl.nn.1000 )
+
+snpl.nn.lm <- lm( near.neighbor~RandType*factor(SampleSize), data=snpl.nn )
+anova( snpl.nn.lm )
+#TukeyHSD( aov( near.neighbor~RandType*factor(SampleSize), data=snpl.nn ) )
 
 ## **************************************************************##
 ## Examining variable interaction effects
