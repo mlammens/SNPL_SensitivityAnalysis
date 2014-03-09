@@ -46,9 +46,9 @@
 ## often changes, but thus far it always includes the main SnowyPlover
 ## directory (folder)
 #snpl.project.dir <- '/Volumes/AKCAKAYA-2/Projects/SnowyPlover/'
-snpl.project.dir <- '/media/AKCAKAYA-2/Projects/SnowyPlover/'
+#snpl.project.dir <- '/media/AKCAKAYA-2/Projects/SnowyPlover/'
 #snpl.project.dir <- '/Projects/SnowyPlover/'
-setwd( snpl.project.dir )
+#setwd( snpl.project.dir )
 
 ## Snowy Plover Sensitivity Analysis Code directory:
 ## -------------------------------------------------
@@ -58,8 +58,8 @@ setwd( snpl.project.dir )
 ## spin-off directory.  This directory is in my DropBox, which 
 ## means I can access it from any computer I'm working on, but the
 ## path changes depending on what system I'm on.
-#sacode.snpl <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
-sacode.snpl <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
+sacode.snpl <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
+#sacode.snpl <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
 
 ## Snowy Plover Sensitivity Analysis  directory:
 ## ----------------------------------------------------
@@ -75,8 +75,8 @@ sa.sens.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/' 
 ## This is the directory/folder that all SNPL SA
 ## results are being stored in. Currently this resides
 ## in my DropBox
-#snpl.SAres.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
-snpl.SAres.dir <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
+snpl.SAres.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
+#snpl.SAres.dir <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
 
 ## The following is a list of procedures that have been carried
 ## out outside of this script, that might be incorporated later.
@@ -580,6 +580,9 @@ load( 'Results/snpl.10k.SA2.ema.brt.results.RData' )
 ## load them here, rather than have to re-run them
 load( 'Results/snpl.10k.SA2.p50.brt.results.RData')
 
+## Load all SA2 P50 results if needed
+load( 'Results/snpl.SA2.p50.brt.results.RData' )
+
 ## Define the importance values that we are considering the 
 ## references (ie TRUE) values.  In nearly all scenarios, this
 ## should be one of the Part.Num. = 10000 scenarios. Currently
@@ -632,16 +635,19 @@ rm( brt.part.num.summ.df, brt.summ.list )
 ## load them here, rather than have to re-run them
 load( 'Results/snpl.10k.SA2.ema.brt.results.RData')
 
+## Load all SA2 P50 results if needed
+load( 'Results/snpl.SA2.ema.brt.results.RData' )
+
 ## Define the importance values that we are considering the 
 ## references (ie TRUE) values.  In nearly all scenarios, this
 ## should be one of the Part.Num. = 10000 scenarios. Currently
 ## they are defined as the 'lhs' results
 # Relative end-point metrics
-brt.ema.summary.relEnds.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$relEnds.lhs$brt.summary[[1]] )
+brt.summary.relEnds.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$relEnds.lhs$brt.summary[[1]] )
 # Absolute end-point metrics - 2M SLR
-brt.ema.summary.absEnds.slr.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$lhs.2m$brt.summary[[1]] )
+brt.summary.absEnds.slr.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$lhs.2m$brt.summary[[1]] )
 # Absolute end-point metrics - NoCC 
-brt.ema.summary.absEnds.nocc.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$lhs.nocc$brt.summary[[1]] )
+brt.summary.absEnds.nocc.ref <- brt.summary.ord( snpl.10k.SA2.brt.results.ema$lhs.nocc$brt.summary[[1]] )
 
 
 # Get the element names for the xxx.results lists - should be the
@@ -665,8 +671,9 @@ for ( part.num.ind in 1:length(snpl.brt.results.ema)) {
   # Each of these lists has 6 list elements - loop through these
   for ( scenario.res in 1:length(part.num.result) ) {
     brt.summ.list <- part.num.result[[ scenario.res ]]$brt.summary
-    brt.part.num.summ.df[[ scenario.res ]] <- make.brt.summary.df( brt.summ.list, end.point=abs.rel.vector[ scenario.res ],
-                                                                   slr=slr.vector[ scenario.res ])
+    brt.part.num.summ.df[[ scenario.res ]] <- 
+      make.brt.summary.df( brt.summ.list, end.point=abs.rel.vector[ scenario.res ],
+                           slr=slr.vector[ scenario.res ])
   }
   names( brt.part.num.summ.df ) <- scenario.names
   brt.ema.summ.df.complete[[ part.num.ind ]] <- brt.part.num.summ.df
@@ -732,4 +739,35 @@ ggplot( brt.corr.reference, aes(samp,cor.val)) + geom_boxplot() + facet_grid( sl
 # This call makes plots where the y-axis varies individiaully for each **plot**
 #ggplot( brt.corr.reference, aes(samp,cor.val)) + geom_boxplot() + facet_wrap( slr~part.num, scales='free_y' )
 
-ggsave('SA2-pearson-cor-boxplots-ema.pdf')
+#ggsave('SA2-pearson-cor-boxplots-ema.pdf')
+
+## Use ggplot to have a look at our results in box-plot form
+temp <- brt.corr.reference
+temp$samp <- as.character( temp$samp)
+temp$samp[ temp$samp=="lhs" ] <- "LHS"
+temp$samp[ temp$samp=="unif" ] <- "URS"
+temp$slr <- as.character( temp$slr )
+temp$slr[ temp$slr=="2m" ] <- "2m SLR"
+temp$slr[ temp$slr=="nocc" ] <- "No SLR"
+temp$slr[ temp$slr=="relEnds" ] <- "Relative"
+temp$part.num <- as.character( temp$part.num )
+temp$part.num[ temp$part.num=="snpl.100.SA2" ] <- "100"
+temp$part.num[ temp$part.num=="snpl.250.SA2" ] <- "250"
+temp$part.num[ temp$part.num=="snpl.500.SA2" ] <- "500"
+temp$part.num[ temp$part.num=="snpl.1000.SA2" ] <- "1000"
+temp$part.num <- 
+  factor( temp$part.num, c('100','250','500','1000') )
+
+ggplot( temp, aes(samp,cor.val)) + 
+  geom_boxplot() + 
+  facet_grid( slr~part.num, scales='free_y' ) +
+  ylab("Pearson Correlation Coefficient Value") +
+  xlab("Sampling Type") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times") )
+
+## Save the P50 results to this file
+#ggsave( file="figures/Diss_Fig_2_10.pdf", width=6.5, height=6.5, units="in" )
+
+## Save the EMA results to this file
+ggsave( file="figures/Diss_Fig_2_11.pdf", width=6.5, height=6.5, units="in" )

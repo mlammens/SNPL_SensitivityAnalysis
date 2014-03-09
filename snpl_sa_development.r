@@ -240,16 +240,22 @@ dev.off()
 
 ## First work with the PartNum=100 case
 # Pick 10 random RepNumbers to work with
-reps.toUse <- sample(1:100,10)
+#reps.toUse <- sample(1:100,10)
+
+# For figure makeing, choose only 5 plots to work with
+set.seed(1981)
+reps.toUse <- sample(1:100,5)
+
 # Here I'm setting reps.toUse to a previously generated set of 10 reps
 # to be used **specifically** for Part.Num = 100
 #reps.toUse <- c(2,10,31,39,54,72,84,88,92,96)
-reps.toUse <- 1:100
+#reps.toUse <- 1:100
 # Get indices for these reps. Indices will be 
 # the same for each partition within PartNum sets
 get.rep <- function( RN ){ which( snpl.100.SA1.part$lhs.nocc$RepNumber == RN ) }
-rep.ind <- sapply( reps.toUse, get.rep )
-rep.ind <- as.vector(rep.ind)
+#rep.ind <- sapply( reps.toUse, get.rep )
+#rep.ind <- as.vector(rep.ind)
+rep.ind <- which( snpl.100.SA1.part$lhs.nocc$RepNumber %in% reps.toUse )
 
 ## **************************************************************##
 ## Below is code to examine differences in 'evenness' of 
@@ -263,13 +269,26 @@ rep.ind <- as.vector(rep.ind)
 # examine visually the differences between unif
 # and LHS sampling.  Note that these values will be the
 # same for NoCC and 2M for each RandType
-snpl.100.bivar.df <- rbind( snpl.100.SA2.part$lhs.nocc[ rep.ind, ], 
-                            snpl.100.SA2.part$unif.nocc[ rep.ind, ] )
-#snpl.100.bivar.df <- rbind( snpl.100.SA1.part$lhs.nocc[ rep.ind, ], 
-#                            snpl.100.SA1.part$unif.nocc[ rep.ind, ] )
+# snpl.100.bivar.df <- rbind( snpl.100.SA2.part$lhs.nocc[ rep.ind, ], 
+#                             snpl.100.SA2.part$unif.nocc[ rep.ind, ] )
+snpl.100.bivar.df <- rbind( snpl.100.SA1.part$lhs.nocc[ rep.ind, ], 
+                           snpl.100.SA1.part$unif.nocc[ rep.ind, ] )
 # Make bivariate plots
-snpl.bv <- ggplot( snpl.100.bivar.df, aes( ad.surv, fecund )) + geom_point() + facet_grid(RandType~RepNumber)
+temp <- snpl.100.bivar.df
+temp$RandType <- as.character( temp$RandType )
+temp$RandType[ temp$RandType=="Unif" ] <- "URS"
+snpl.bv <- ggplot( temp, aes( ad.surv, fecund )) + 
+  geom_point() + 
+  facet_grid(RandType~RepNumber) +
+  xlab("Adult Survival") +
+  ylab("Fecundity") +
+  scale_x_continuous( breaks=seq( 0.65, 0.75, 0.05 ) ) +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times", face="bold") )
 
+print(snpl.bv)
+#ggsave( filename="figures/Diss_Fig_2_3.pdf", width=6.5, height=4.5, units="in" )
+rm( temp )
 ## -------------------------------------------------------------------- ##
 ## Here's the *Nearest Neighbor* analysis for 10 repetitions 
 ## of the PartNum=100 dataset.
@@ -327,8 +346,8 @@ for ( Rep in 1:length(reps.toUse) ){
 # Combine nearest neighbor data.frames
 snpl.nn <- rbind( snpl.nn.unif, snpl.nn.lhs )
 snpl.nn <- as.data.frame(snpl.nn)
-#rand.type <- rep(c("Unif","LHS"),each=1000) # Change to 10000 if using all reps
-rand.type <- rep(c("Unif","LHS"),each=10000) # Change to 10000 if using all reps
+rand.type <- rep(c("Unif","LHS"),each=500) # Change to 1000 if using 10 reps
+#rand.type <- rep(c("Unif","LHS"),each=10000) # Change to 10000 if using all reps
 snpl.nn <- cbind( snpl.nn, rand.type )
 names(snpl.nn) <- c("near.neighbor","RepNumber","RandType")
 snpl.nn$RepNumber <- as.factor( snpl.nn$RepNumber )
@@ -339,15 +358,23 @@ snpl.nn.100$SampleSize <- 100
 #snpl.nn.hist <- ggplot(aes(x=near.neighbor,fill=RandType),data=snpl.nn) + 
 #  geom_histogram(position="identity",alpha=0.5) + 
 #  facet_grid(.~RepNumber)
-snpl.nn.hist <- ggplot(data=snpl.nn,aes(x=near.neighbor)) + 
+temp <- snpl.nn
+temp$RandType <- as.character( temp$RandType )
+temp$RandType[ temp$RandType=="Unif" ] <- "URS"
+snpl.nn.hist <- ggplot(data=temp ,aes(x=near.neighbor)) + 
   geom_histogram() +
-  facet_grid(RandType~RepNumber)
+  facet_grid(RandType~RepNumber) +
+  xlab( "Nearest Neighbor Distance" ) +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times", face="bold") )
+  
 print(snpl.nn.hist)
+rm( temp )
 
 # Make figure of bivariate plots with nearest neighbor
 # histograms
 #pdf('figures/snpl.100.SA1.unifVlhs.pdf',width=14)
-pdf('figures/snpl.100.SA2.unifVlhs.pdf',width=14)
+pdf('figures/Diss_Fig_2_3.pdf',width=6.5,height=6.5)
 grid.arrange( snpl.bv, snpl.nn.hist )
 dev.off()
 
@@ -1070,46 +1097,115 @@ relEnds <- which( grepl( pattern="relEnds", x=brt.10k.p50.summ.df.complete$scena
 brt.10k.p50.summ.df.delta <- brt.10k.p50.summ.df.complete[ relEnds, ]
 ## Make a data.frame with absolute endpoints only (ie no relative)
 brt.10k.p50.summ.df.absolute <- brt.10k.p50.summ.df.complete[ -relEnds, ]
-# Order the results based on increase of relative importance for 
-# absolute endpoints
-brt.10k.p50.summ.df.absolute <- brt.10k.p50.summ.df.absolute[ order(brt.10k.p50.summ.df.absolute$rel.inf,decreasing=F),]
-var.order <- unique( brt.10k.p50.summ.df.absolute$var )
-brt.10k.p50.summ.df.absolute$var <- factor( brt.10k.p50.summ.df.absolute$var, var.order )
-# Order the delta values using the absolute order too
-brt.10k.p50.summ.df.delta$var <- factor( brt.10k.p50.summ.df.delta$var, var.order )
+
+# # Order the results based on increase of relative importance for 
+# # absolute endpoints
+# brt.10k.p50.summ.df.absolute <- 
+#   brt.10k.p50.summ.df.absolute[ order(brt.10k.p50.summ.df.absolute$rel.inf,decreasing=F),]
+# var.order <- unique( brt.10k.p50.summ.df.absolute$var )
+# brt.10k.p50.summ.df.absolute$var <- factor( brt.10k.p50.summ.df.absolute$var, var.order )
+# 
+# # Order the delta values using the absolute order too
+# brt.10k.p50.summ.df.delta$var <- factor( brt.10k.p50.summ.df.delta$var, var.order )
 
 ## ----------------------------------------------------------------#
 ## Save a grid arranged version of these plots to file
-pdf('figures/relative_influence_10k_p50.pdf',width=14)
-vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
-pushViewport(viewport(layout = grid.layout(1, 2)))
+# pdf('figures/relative_influence_10k_p50.pdf',width=14)
+# vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+# pushViewport(viewport(layout = grid.layout(1, 2)))
 ## ----------------------------------------------------------------#
+
+## Write a function that changes variable names
+snpl_rename_vars <- function( vars ){
+  vars <- ifelse( vars=="fecund", yes="Fecundity", no=vars )
+  vars <- ifelse( vars=="ad.surv", yes="Adult Surv.", no=vars )
+  vars <- ifelse( vars=="surv.stdev.avg", yes="Std. Dev. Surv.", no=vars )
+  vars <- ifelse( vars=="fec.stdev.avg", yes="Std. Dev. Fec.", no=vars )
+  vars <- ifelse( vars=="kch.type", yes="Carrying Capacity", no=vars )
+  vars <- ifelse( vars=="metapop.initab", yes="Initial Abundance", no=vars )
+  vars <- ifelse( vars=="avg.corr.dist.b", yes="Inter pop. Correlation", no=vars )
+  vars <- ifelse( vars=="mean.t0.disp.rate", yes="Dispersal", no=vars )
+}
+
+## Add the full name columns
+brt.10k.p50.summ.df.absolute$var_full <-
+  sapply( as.character(brt.10k.p50.summ.df.absolute$var), snpl_rename_vars )
+
+# Order the results based on increase of relative importance for 
+# absolute endpoints
+brt.10k.p50.summ.df.absolute <- 
+  brt.10k.p50.summ.df.absolute[ order(brt.10k.p50.summ.df.absolute$rel.inf,decreasing=F),]
+var.order <- unique( brt.10k.p50.summ.df.absolute$var_full )
+brt.10k.p50.summ.df.absolute$var_full <- factor( brt.10k.p50.summ.df.absolute$var_full, var.order )
+
+# Order the delta values using the absolute order too
+brt.10k.p50.summ.df.delta$var_full <-
+  sapply( as.character( brt.10k.p50.summ.df.delta$var ), snpl_rename_vars )
+brt.10k.p50.summ.df.delta$var_full <- factor( brt.10k.p50.summ.df.delta$var_full, var.order )
+
+
 ## Make abs.p50 a bar plot for the manuscript
-plot.abs.p50 <- ggplot( brt.10k.p50.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
-plot.abs.p50 <- plot.abs.p50 + geom_bar(position="dodge") + scale_fill_grey() 
-plot.abs.p50 <- plot.abs.p50 + xlab("Parameter") + ylab("Relative Influence") + ylim(0,80)
-# Use `theme_bw()` but modify the location of the legent
-theme_abs <- theme_set( theme_bw() )
-theme_abs <- theme_update( legend.position=c(.85,.65) )
-plot.abs.p50 <- plot.abs.p50 + coord_flip() #+ theme_bw()
-plot.abs.p50 <- plot.abs.p50 + facet_grid(randtype~.)
-print(plot.abs.p50, vp=vplayout(1,1))
+temp <- brt.10k.p50.summ.df.absolute
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.abs.p50 <- 
+  ggplot( temp, aes(var_full, weight=rel.inf, fill=slr)) +
+  geom_bar( aes( order = var), position="dodge") + scale_fill_grey() + 
+  xlab("Parameter") + 
+  ylab("Relative Influence") + 
+  ylim(0,80) +
+  coord_flip() +
+  facet_grid( randtype~. ) + 
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         legend.position=c(.85,.65) )
+
+rm(temp)  
+
+# 
+# # Use `theme_bw()` but modify the location of the legent
+# theme_abs <- theme_set( theme_bw() )
+# theme_abs <- theme_update( legend.position=c(.85,.65) )
+# plot.abs.p50 <- plot.abs.p50 + coord_flip() #+ theme_bw()
+# plot.abs.p50 <- plot.abs.p50 + facet_grid(randtype~.)
+# print(plot.abs.p50, vp=vplayout(1,1))
 #plot.abs.p50
+
 ## ----------------------------------------------------------------#
 ## Make delta.p50 a bar plot for the manuscript
-plot.delta.p50 <- ggplot( brt.10k.p50.summ.df.delta, aes(var,weight=rel.inf)) 
-plot.delta.p50 <- plot.delta.p50 + geom_bar(position="dodge") + scale_fill_grey() 
-plot.delta.p50 <- plot.delta.p50 + ylab("Relative Influence") + ylim(0,80)
-# Use `theme_bw()` but modify to remove axis labels
-theme_new <- theme_set(theme_bw())
-theme_new <- theme_update( axis.title.y=element_blank(),
-                           axis.text.y=element_blank() )
-plot.delta.p50 <- plot.delta.p50 + coord_flip() 
-plot.delta.p50 <- plot.delta.p50 + facet_grid(randtype~.)
-print(plot.delta.p50, vp=vplayout(1,2))
+temp <- brt.10k.p50.summ.df.delta
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.delta.p50 <- 
+  ggplot( temp, aes(var_full, weight=rel.inf)) +
+  geom_bar(position="dodge") + 
+  scale_fill_grey() +
+  ylab("Relative Influence") + 
+  ylim(0,80) + 
+  coord_flip() +
+  facet_grid( randtype~. ) +
+  #annotate( "text", y=70, x=0, label="B") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         axis.title.y=element_blank(),
+         axis.text.y=element_blank() )
+rm(temp)
+
+pdf( file="figures/Diss_Fig_2_4.pdf", width=9, height=5.5 )
+grid.arrange( plot.abs.p50, plot.delta.p50, ncol=2, nrow=1, widths=c(1.3, 1) )
+dev.off()
+
+# print(plot.delta.p50, vp=vplayout(1,2))
 #plot.delta.p50
 ## ----------------------------------------------------------------#
-dev.off()
+
+
+
+#dev.off()
 
 ## ----------------------------------------------------------------#
 ## Make bar plot for a Power Point Presentation
@@ -1130,6 +1226,10 @@ plot.abs.p50 <- plot.abs.p50 + theme(legend.title=element_text(size=28),
 plot.abs.p50  
 ## ----------------------------------------------------------------#
 
+## ******************************************************************** ##
+## Work with EMA results
+## ******************************************************************** ##
+
 ## **************************************************************#
 load('Results/snpl.10k.ema.brt.results.RData') # SA1 -- EMA
 ## WARNING ## This overwrites the previous `snpl.10k.brt.results`
@@ -1142,46 +1242,122 @@ relEnds <- which( grepl( pattern="relEnds", x=brt.10k.ema.summ.df.complete$scena
 brt.10k.ema.summ.df.delta <- brt.10k.ema.summ.df.complete[ relEnds, ]
 ## Make a data.frame with absolute endpoints only (ie no relative)
 brt.10k.ema.summ.df.absolute <- brt.10k.ema.summ.df.complete[ -relEnds, ]
-# Order the results based on increase of relative importance for 
-# absolute endpoints
-brt.10k.ema.summ.df.absolute <- brt.10k.ema.summ.df.absolute[ order(brt.10k.ema.summ.df.absolute$rel.inf,decreasing=F),]
-var.order <- unique( brt.10k.ema.summ.df.absolute$var )
-brt.10k.ema.summ.df.absolute$var <- factor( brt.10k.ema.summ.df.absolute$var, var.order )
-# Order the delta values using the absolute order too
-brt.10k.ema.summ.df.delta$var <- factor( brt.10k.ema.summ.df.delta$var, var.order )
+
+# # Order the results based on increase of relative importance for 
+# # absolute endpoints
+# brt.10k.ema.summ.df.absolute <- 
+#   brt.10k.ema.summ.df.absolute[ order(brt.10k.ema.summ.df.absolute$rel.inf,decreasing=F),]
+# var.order <- unique( brt.10k.ema.summ.df.absolute$var )
+# brt.10k.ema.summ.df.absolute$var <- factor( brt.10k.ema.summ.df.absolute$var, var.order )
+# 
+# # Order the delta values using the absolute order too
+# brt.10k.ema.summ.df.delta$var <- factor( brt.10k.ema.summ.df.delta$var, var.order )
 
 ## ----------------------------------------------------------------#
 ## Save a grid arranged version of these plots to file
-pdf('figures/relative_influence_10k_ema.pdf',width=14)
-vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
-pushViewport(viewport(layout = grid.layout(1, 2)))
+# pdf('figures/relative_influence_10k_ema.pdf',width=14)
+# vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+# pushViewport(viewport(layout = grid.layout(1, 2)))
+
 ## ----------------------------------------------------------------#
 ## Make abs.ema a bar plot for the manuscript
-plot.abs.ema <- ggplot( brt.10k.ema.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
-plot.abs.ema <- plot.abs.ema + geom_bar(position="dodge") + scale_fill_grey() 
-plot.abs.ema <- plot.abs.ema + xlab("Parameter") + ylab("Relative Influence") + ylim(0,70)
-# Use `theme_bw()` but modify the location of the legent
-theme_abs <- theme_set( theme_bw() )
-theme_abs <- theme_update( legend.position=c(.85,.65) )
-plot.abs.ema <- plot.abs.ema + coord_flip() #+ theme_bw()
-plot.abs.ema <- plot.abs.ema + facet_grid(randtype~.)
-print(plot.abs.ema, vp=vplayout(1,1))
-#plot.abs.ema
+
+## Add the full name columns
+brt.10k.ema.summ.df.absolute$var_full <-
+  sapply( as.character(brt.10k.ema.summ.df.absolute$var), snpl_rename_vars )
+
+# Order the results based on increase of relative importance for 
+# absolute endpoints
+brt.10k.ema.summ.df.absolute <- 
+  brt.10k.ema.summ.df.absolute[ order(brt.10k.ema.summ.df.absolute$rel.inf,decreasing=F),]
+var.order <- unique( brt.10k.ema.summ.df.absolute$var_full )
+brt.10k.ema.summ.df.absolute$var_full <- factor( brt.10k.ema.summ.df.absolute$var_full, var.order )
+
+# Order the delta values using the absolute order too
+brt.10k.ema.summ.df.delta$var_full <-
+  sapply( as.character( brt.10k.ema.summ.df.delta$var ), snpl_rename_vars )
+brt.10k.ema.summ.df.delta$var_full <- factor( brt.10k.ema.summ.df.delta$var_full, var.order )
+
+
+## Make abs.ema a bar plot for the manuscript
+temp <- brt.10k.ema.summ.df.absolute
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.abs.ema <- 
+  ggplot( temp, aes(var_full, weight=rel.inf, fill=slr)) +
+  geom_bar( aes( order = var), position="dodge") + scale_fill_grey() + 
+  xlab("Parameter") + 
+  ylab("Relative Influence") + 
+  ylim(0,70) +
+  coord_flip() +
+  facet_grid( randtype~. ) + 
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         legend.position=c(.85,.65) )
+
+rm(temp)  
+
+
 ## ----------------------------------------------------------------#
 ## Make delta.ema a bar plot for the manuscript
-plot.delta.ema <- ggplot( brt.10k.ema.summ.df.delta, aes(var,weight=rel.inf)) 
-plot.delta.ema <- plot.delta.ema + geom_bar(position="dodge") + scale_fill_grey() 
-plot.delta.ema <- plot.delta.ema + ylab("Relative Influence") + ylim(0,70)
-# Use `theme_bw()` but modify to remove axis labels
-theme_new <- theme_set(theme_bw())
-theme_new <- theme_update( axis.title.y=element_blank(),
-                           axis.text.y=element_blank() )
-plot.delta.ema <- plot.delta.ema + coord_flip() 
-plot.delta.ema <- plot.delta.ema + facet_grid(randtype~.)
-print(plot.delta.ema, vp=vplayout(1,2))
-#plot.delta.ema
-## ----------------------------------------------------------------#
+temp <- brt.10k.ema.summ.df.delta
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.delta.ema <- 
+  ggplot( temp, aes(var_full, weight=rel.inf)) +
+  geom_bar(position="dodge") + 
+  scale_fill_grey() +
+  ylab("Relative Influence") + 
+  ylim(0,70) + 
+  coord_flip() +
+  facet_grid( randtype~. ) +
+  #annotate( "text", y=70, x=0, label="B") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         axis.title.y=element_blank(),
+         axis.text.y=element_blank() )
+rm(temp)
+
+pdf( file="figures/Diss_Fig_2_5.pdf", width=9, height=5.5 )
+grid.arrange( plot.abs.ema, plot.delta.ema, ncol=2, nrow=1, widths=c(1.3, 1) )
 dev.off()
+
+
+# plot.abs.ema <- ggplot( brt.10k.ema.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
+# plot.abs.ema <- plot.abs.ema + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.abs.ema <- plot.abs.ema + xlab("Parameter") + ylab("Relative Influence") + ylim(0,70)
+# # Use `theme_bw()` but modify the location of the legent
+# theme_abs <- theme_set( theme_bw() )
+# theme_abs <- theme_update( legend.position=c(.85,.65) )
+# plot.abs.ema <- plot.abs.ema + coord_flip() #+ theme_bw()
+# plot.abs.ema <- plot.abs.ema + facet_grid(randtype~.)
+# print(plot.abs.ema, vp=vplayout(1,1))
+# #plot.abs.ema
+# ## ----------------------------------------------------------------#
+# ## Make delta.ema a bar plot for the manuscript
+# plot.delta.ema <- ggplot( brt.10k.ema.summ.df.delta, aes(var,weight=rel.inf)) 
+# plot.delta.ema <- plot.delta.ema + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.delta.ema <- plot.delta.ema + ylab("Relative Influence") + ylim(0,70)
+# # Use `theme_bw()` but modify to remove axis labels
+# theme_new <- theme_set(theme_bw())
+# theme_new <- theme_update( axis.title.y=element_blank(),
+#                            axis.text.y=element_blank() )
+# plot.delta.ema <- plot.delta.ema + coord_flip() 
+# plot.delta.ema <- plot.delta.ema + facet_grid(randtype~.)
+# print(plot.delta.ema, vp=vplayout(1,2))
+# #plot.delta.ema
+# ## ----------------------------------------------------------------#
+# dev.off()
+
+## ******************************************************************** ##
+## ******************************************************************** ##
+## Begin working with SA2 results
+## ******************************************************************** ##
+## ******************************************************************** ##
 
 ## **************************************************************#
 load('Results/snpl.10k.SA2.p50.brt.results.RData') # SA2 -- p50
@@ -1196,44 +1372,131 @@ brt.10k.SA2.p50.summ.df.delta <- brt.10k.SA2.p50.summ.df.complete[ relEnds, ]
 brt.10k.SA2.p50.summ.df.absolute <- brt.10k.SA2.p50.summ.df.complete[ -relEnds, ]
 # Order the results based on increase of relative importance for 
 # absolute endpoints
-brt.10k.SA2.p50.summ.df.absolute <- brt.10k.SA2.p50.summ.df.absolute[ order(brt.10k.SA2.p50.summ.df.absolute$rel.inf,decreasing=F),]
+brt.10k.SA2.p50.summ.df.absolute <- 
+  brt.10k.SA2.p50.summ.df.absolute[ order(brt.10k.SA2.p50.summ.df.absolute$rel.inf,decreasing=F),]
 var.order <- unique( brt.10k.SA2.p50.summ.df.absolute$var )
 brt.10k.SA2.p50.summ.df.absolute$var <- factor( brt.10k.SA2.p50.summ.df.absolute$var, var.order )
 # Order the delta values using the absolute order too
 brt.10k.SA2.p50.summ.df.delta$var <- factor( brt.10k.SA2.p50.summ.df.delta$var, var.order )
 
+## -------------------------------------------------------------------- ##
+
+
+## Add the full name columns
+brt.10k.SA2.p50.summ.df.absolute$var_full <-
+  sapply( as.character(brt.10k.SA2.p50.summ.df.absolute$var), snpl_rename_vars )
+
+# Order the results based on increase of relative importance for 
+# absolute endpoints
+brt.10k.SA2.p50.summ.df.absolute <- 
+  brt.10k.SA2.p50.summ.df.absolute[ order(brt.10k.SA2.p50.summ.df.absolute$rel.inf,decreasing=F),]
+var.order <- unique( brt.10k.SA2.p50.summ.df.absolute$var_full )
+brt.10k.SA2.p50.summ.df.absolute$var_full <- factor( brt.10k.SA2.p50.summ.df.absolute$var_full, var.order )
+
+# Order the delta values using the absolute order too
+brt.10k.SA2.p50.summ.df.delta$var_full <-
+  sapply( as.character( brt.10k.SA2.p50.summ.df.delta$var ), snpl_rename_vars )
+brt.10k.SA2.p50.summ.df.delta$var_full <- factor( brt.10k.SA2.p50.summ.df.delta$var_full, var.order )
+
+## Make abs.p50 a bar plot for the manuscript
+temp <- brt.10k.SA2.p50.summ.df.absolute
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.abs.SA2.p50 <- 
+  ggplot( temp, aes(var_full, weight=rel.inf, fill=slr)) +
+  geom_bar( aes( order = var), position="dodge") + scale_fill_grey() + 
+  xlab("Parameter") + 
+  ylab("Relative Influence") + 
+  ylim(0,40) +
+  coord_flip() +
+  facet_grid( randtype~. ) + 
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         legend.position=c(.85,.65) )
+
+rm(temp)  
+
+# 
+# # Use `theme_bw()` but modify the location of the legent
+# theme_abs <- theme_set( theme_bw() )
+# theme_abs <- theme_update( legend.position=c(.85,.65) )
+# plot.abs.p50 <- plot.abs.p50 + coord_flip() #+ theme_bw()
+# plot.abs.p50 <- plot.abs.p50 + facet_grid(randtype~.)
+# print(plot.abs.p50, vp=vplayout(1,1))
+#plot.abs.p50
+
 ## ----------------------------------------------------------------#
-## Save a grid arranged version of these plots to file
-pdf('figures/relative_influence_10k_SA2_p50.pdf',width=14)
-vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
-pushViewport(viewport(layout = grid.layout(1, 2)))
-## ----------------------------------------------------------------#
-## Make abs.SA2.p50 a bar plot for the manuscript
-plot.abs.SA2.p50 <- ggplot( brt.10k.SA2.p50.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
-plot.abs.SA2.p50 <- plot.abs.SA2.p50 + geom_bar(position="dodge") + scale_fill_grey() 
-plot.abs.SA2.p50 <- plot.abs.SA2.p50 + xlab("Parameter") + ylab("Relative Influence") + ylim(0,40)
-# Use `theme_bw()` but modify the location of the legent
-theme_abs <- theme_set( theme_bw() )
-theme_abs <- theme_update( legend.position=c(.85,.65) )
-plot.abs.SA2.p50 <- plot.abs.SA2.p50 + coord_flip() #+ theme_bw()
-plot.abs.SA2.p50 <- plot.abs.SA2.p50 + facet_grid(randtype~.)
-print(plot.abs.SA2.p50, vp=vplayout(1,1))
-#plot.abs.SA2.p50
-## ----------------------------------------------------------------#
-## Make delta.SA2.p50 a bar plot for the manuscript
-plot.delta.SA2.p50 <- ggplot( brt.10k.SA2.p50.summ.df.delta, aes(var,weight=rel.inf)) 
-plot.delta.SA2.p50 <- plot.delta.SA2.p50 + geom_bar(position="dodge") + scale_fill_grey() 
-plot.delta.SA2.p50 <- plot.delta.SA2.p50 + ylab("Relative Influence") + ylim(0,40)
-# Use `theme_bw()` but modify to remove axis labels
-theme_new <- theme_set(theme_bw())
-theme_new <- theme_update( axis.title.y=element_blank(),
-                           axis.text.y=element_blank() )
-plot.delta.SA2.p50 <- plot.delta.SA2.p50 + coord_flip() 
-plot.delta.SA2.p50 <- plot.delta.SA2.p50 + facet_grid(randtype~.)
-print(plot.delta.SA2.p50, vp=vplayout(1,2))
-#plot.delta.SA2.p50
-## ----------------------------------------------------------------#
+## Make delta.p50 a bar plot for the manuscript
+temp <- brt.10k.SA2.p50.summ.df.delta
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.delta.SA2.p50 <- 
+  ggplot( temp, aes(var_full, weight=rel.inf)) +
+  geom_bar(position="dodge") + 
+  scale_fill_grey() +
+  ylab("Relative Influence") + 
+  ylim(0,40) + 
+  coord_flip() +
+  facet_grid( randtype~. ) +
+  #annotate( "text", y=70, x=0, label="B") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         axis.title.y=element_blank(),
+         axis.text.y=element_blank() )
+rm(temp)
+
+pdf( file="figures/Diss_Fig_2_8.pdf", width=9, height=5.5 )
+grid.arrange( plot.abs.SA2.p50, plot.delta.SA2.p50, ncol=2, nrow=1, widths=c(1.3, 1) )
 dev.off()
+
+# print(plot.delta.p50, vp=vplayout(1,2))
+#plot.delta.p50
+## ----------------------------------------------------------------#
+
+
+
+
+
+
+
+
+
+# ## ----------------------------------------------------------------#
+# ## Save a grid arranged version of these plots to file
+# pdf('figures/relative_influence_10k_SA2_p50.pdf',width=14)
+# vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+# pushViewport(viewport(layout = grid.layout(1, 2)))
+## ----------------------------------------------------------------#
+# ## Make abs.SA2.p50 a bar plot for the manuscript
+# plot.abs.SA2.p50 <- ggplot( brt.10k.SA2.p50.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
+# plot.abs.SA2.p50 <- plot.abs.SA2.p50 + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.abs.SA2.p50 <- plot.abs.SA2.p50 + xlab("Parameter") + ylab("Relative Influence") + ylim(0,40)
+# # Use `theme_bw()` but modify the location of the legent
+# theme_abs <- theme_set( theme_bw() )
+# theme_abs <- theme_update( legend.position=c(.85,.65) )
+# plot.abs.SA2.p50 <- plot.abs.SA2.p50 + coord_flip() #+ theme_bw()
+# plot.abs.SA2.p50 <- plot.abs.SA2.p50 + facet_grid(randtype~.)
+# print(plot.abs.SA2.p50, vp=vplayout(1,1))
+# #plot.abs.SA2.p50
+# ## ----------------------------------------------------------------#
+# ## Make delta.SA2.p50 a bar plot for the manuscript
+# plot.delta.SA2.p50 <- ggplot( brt.10k.SA2.p50.summ.df.delta, aes(var,weight=rel.inf)) 
+# plot.delta.SA2.p50 <- plot.delta.SA2.p50 + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.delta.SA2.p50 <- plot.delta.SA2.p50 + ylab("Relative Influence") + ylim(0,40)
+# # Use `theme_bw()` but modify to remove axis labels
+# theme_new <- theme_set(theme_bw())
+# theme_new <- theme_update( axis.title.y=element_blank(),
+#                            axis.text.y=element_blank() )
+# plot.delta.SA2.p50 <- plot.delta.SA2.p50 + coord_flip() 
+# plot.delta.SA2.p50 <- plot.delta.SA2.p50 + facet_grid(randtype~.)
+# print(plot.delta.SA2.p50, vp=vplayout(1,2))
+# #plot.delta.SA2.p50
+# ## ----------------------------------------------------------------#
+# dev.off()
 
 ## ----------------------------------------------------------------#
 # Make a plot with absolute endpoints only (ie no relative) 
@@ -1261,7 +1524,7 @@ plot.SA2.p50.abs
 
 ## **************************************************************#
 
-load('Results/snpl.10k.SA2.ema.brt.results.RData') # SA2 -- p50
+load('Results/snpl.10k.SA2.ema.brt.results.RData') # SA2 -- EMA
 # Loads `snpl.10k.SA2.brt.results.ema`
 brt.10k.SA2.ema.summ.df.complete <- make.10k.brt.summary.df( snpl.10k.SA2.brt.results.ema )
 
@@ -1273,44 +1536,114 @@ brt.10k.SA2.ema.summ.df.delta <- brt.10k.SA2.ema.summ.df.complete[ relEnds, ]
 brt.10k.SA2.ema.summ.df.absolute <- brt.10k.SA2.ema.summ.df.complete[ -relEnds, ]
 # Order the results based on increase of relative importance for 
 # absolute endpoints
-brt.10k.SA2.ema.summ.df.absolute <- brt.10k.SA2.ema.summ.df.absolute[ order(brt.10k.SA2.ema.summ.df.absolute$rel.inf,decreasing=F),]
+brt.10k.SA2.ema.summ.df.absolute <- 
+  brt.10k.SA2.ema.summ.df.absolute[ order(brt.10k.SA2.ema.summ.df.absolute$rel.inf,decreasing=F),]
 var.order <- unique( brt.10k.SA2.ema.summ.df.absolute$var )
 brt.10k.SA2.ema.summ.df.absolute$var <- factor( brt.10k.SA2.ema.summ.df.absolute$var, var.order )
 # Order the delta values using the absolute order too
 brt.10k.SA2.ema.summ.df.delta$var <- factor( brt.10k.SA2.ema.summ.df.delta$var, var.order )
 
+
+
+## Add the full name columns
+brt.10k.SA2.ema.summ.df.absolute$var_full <-
+  sapply( as.character(brt.10k.SA2.ema.summ.df.absolute$var), snpl_rename_vars )
+
+# Order the results based on increase of relative importance for 
+# absolute endpoints
+brt.10k.SA2.ema.summ.df.absolute <- 
+  brt.10k.SA2.ema.summ.df.absolute[ order(brt.10k.SA2.ema.summ.df.absolute$rel.inf,decreasing=F),]
+var.order <- unique( brt.10k.SA2.ema.summ.df.absolute$var_full )
+brt.10k.SA2.ema.summ.df.absolute$var_full <- factor( brt.10k.SA2.ema.summ.df.absolute$var_full, var.order )
+
+# Order the delta values using the absolute order too
+brt.10k.SA2.ema.summ.df.delta$var_full <-
+  sapply( as.character( brt.10k.SA2.ema.summ.df.delta$var ), snpl_rename_vars )
+brt.10k.SA2.ema.summ.df.delta$var_full <- factor( brt.10k.SA2.ema.summ.df.delta$var_full, var.order )
+
+## Make abs.ema a bar plot for the manuscript
+temp <- brt.10k.SA2.ema.summ.df.absolute
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.abs.SA2.ema <- 
+  ggplot( temp, aes(var_full, weight=rel.inf, fill=slr)) +
+  geom_bar( aes( order = var), position="dodge") + scale_fill_grey() + 
+  xlab("Parameter") + 
+  ylab("Relative Influence") + 
+  ylim(0,35) +
+  coord_flip() +
+  facet_grid( randtype~. ) + 
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         legend.position=c(.85,.65) )
+
+rm(temp)  
+
 ## ----------------------------------------------------------------#
-## Save a grid arranged version of these plots to file
-pdf('figures/relative_influence_10k_SA2_ema.pdf',width=14)
-vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
-pushViewport(viewport(layout = grid.layout(1, 2)))
-## ----------------------------------------------------------------#
-## Make abs.SA2.ema a bar plot for the manuscript
-plot.abs.SA2.ema <- ggplot( brt.10k.SA2.ema.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
-plot.abs.SA2.ema <- plot.abs.SA2.ema + geom_bar(position="dodge") + scale_fill_grey() 
-plot.abs.SA2.ema <- plot.abs.SA2.ema + xlab("Parameter") + ylab("Relative Influence") + ylim(0,35)
-# Use `theme_bw()` but modify the location of the legent
-theme_abs <- theme_set( theme_bw() )
-theme_abs <- theme_update( legend.position=c(.85,.65) )
-plot.abs.SA2.ema <- plot.abs.SA2.ema + coord_flip() #+ theme_bw()
-plot.abs.SA2.ema <- plot.abs.SA2.ema + facet_grid(randtype~.)
-print(plot.abs.SA2.ema, vp=vplayout(1,1))
-#plot.abs.SA2.ema
-## ----------------------------------------------------------------#
-## Make delta.SA2.ema a bar plot for the manuscript
-plot.delta.SA2.ema <- ggplot( brt.10k.SA2.ema.summ.df.delta, aes(var,weight=rel.inf)) 
-plot.delta.SA2.ema <- plot.delta.SA2.ema + geom_bar(position="dodge") + scale_fill_grey() 
-plot.delta.SA2.ema <- plot.delta.SA2.ema + ylab("Relative Influence") + ylim(0,35)
-# Use `theme_bw()` but modify to remove axis labels
-theme_new <- theme_set(theme_bw())
-theme_new <- theme_update( axis.title.y=element_blank(),
-                           axis.text.y=element_blank() )
-plot.delta.SA2.ema <- plot.delta.SA2.ema + coord_flip() 
-plot.delta.SA2.ema <- plot.delta.SA2.ema + facet_grid(randtype~.)
-print(plot.delta.SA2.ema, vp=vplayout(1,2))
-#plot.delta.SA2.ema
-## ----------------------------------------------------------------#
+## Make delta.ema a bar plot for the manuscript
+temp <- brt.10k.SA2.ema.summ.df.delta
+temp$randtype <- as.character( temp$randtype )
+temp$randtype[ temp$randtype=="lhs" ] <- "LHS"
+temp$randtype[ temp$randtype=="unif" ] <- "URS"
+
+plot.delta.SA2.ema <- 
+  ggplot( temp, aes(var_full, weight=rel.inf)) +
+  geom_bar(position="dodge") + 
+  scale_fill_grey() +
+  ylab("Relative Influence") + 
+  ylim(0,35) + 
+  coord_flip() +
+  facet_grid( randtype~. ) +
+  #annotate( "text", y=70, x=0, label="B") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times"),
+         axis.title.y=element_blank(),
+         axis.text.y=element_blank() )
+rm(temp)
+
+pdf( file="figures/Diss_Fig_2_9.pdf", width=9, height=5.5 )
+grid.arrange( plot.abs.SA2.ema, plot.delta.SA2.ema, ncol=2, nrow=1, widths=c(1.3, 1) )
 dev.off()
+
+
+
+# ## ----------------------------------------------------------------#
+# ## Save a grid arranged version of these plots to file
+# pdf('figures/relative_influence_10k_SA2_ema.pdf',width=14)
+# vplayout <- function(x, y) viewport(layout.pos.row = x, layout.pos.col = y)
+# pushViewport(viewport(layout = grid.layout(1, 2)))
+# ## ----------------------------------------------------------------#
+# ## Make abs.SA2.ema a bar plot for the manuscript
+# plot.abs.SA2.ema <- ggplot( brt.10k.SA2.ema.summ.df.absolute, aes(var,weight=rel.inf,fill=slr)) 
+# plot.abs.SA2.ema <- plot.abs.SA2.ema + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.abs.SA2.ema <- plot.abs.SA2.ema + xlab("Parameter") + ylab("Relative Influence") + ylim(0,35)
+# # Use `theme_bw()` but modify the location of the legent
+# theme_abs <- theme_set( theme_bw() )
+# theme_abs <- theme_update( legend.position=c(.85,.65) )
+# plot.abs.SA2.ema <- plot.abs.SA2.ema + coord_flip() #+ theme_bw()
+# plot.abs.SA2.ema <- plot.abs.SA2.ema + facet_grid(randtype~.)
+# print(plot.abs.SA2.ema, vp=vplayout(1,1))
+# #plot.abs.SA2.ema
+# ## ----------------------------------------------------------------#
+# ## Make delta.SA2.ema a bar plot for the manuscript
+# plot.delta.SA2.ema <- ggplot( brt.10k.SA2.ema.summ.df.delta, aes(var,weight=rel.inf)) 
+# plot.delta.SA2.ema <- plot.delta.SA2.ema + geom_bar(position="dodge") + scale_fill_grey() 
+# plot.delta.SA2.ema <- plot.delta.SA2.ema + ylab("Relative Influence") + ylim(0,35)
+# # Use `theme_bw()` but modify to remove axis labels
+# theme_new <- theme_set(theme_bw())
+# theme_new <- theme_update( axis.title.y=element_blank(),
+#                            axis.text.y=element_blank() )
+# plot.delta.SA2.ema <- plot.delta.SA2.ema + coord_flip() 
+# plot.delta.SA2.ema <- plot.delta.SA2.ema + facet_grid(randtype~.)
+# print(plot.delta.SA2.ema, vp=vplayout(1,2))
+# #plot.delta.SA2.ema
+# ## ----------------------------------------------------------------#
+# dev.off()
+
+
+
 
 ## **************************************************************##
 ## Create the distribution of delta P50 in the *unmatched* scenario
@@ -1324,23 +1657,42 @@ lhs.2m.prob.50 <- snpl.10k.SA2.part$lhs.2m$prob.50
 mean.prob.50.diff <- mean(snpl.10k.SA2.part$lhs.2m$prob.50) - 
   mean(snpl.10k.SA2.part$lhs.nocc$prob.50)
 
+# ##Assuming that SA2 10k data is already read in
+# ## Endpoint = Probability of decline to 50 "prob.50"
+# lhs.nocc.prob.50 <- snpl.10k.SA1.part$lhs.nocc$prob.50
+# lhs.2m.prob.50 <- snpl.10k.SA1.part$lhs.2m$prob.50
+# mean.prob.50.diff <- mean(snpl.10k.SA1.part$lhs.2m$prob.50) - 
+#   mean(snpl.10k.SA1.part$lhs.nocc$prob.50)
+
 # Make a data frame with these values
 slr.scenario.vect <- rep( c('nocc','2m'), each=length(lhs.nocc.prob.50) )
 lhs.prob.50.df <- data.frame( slr=slr.scenario.vect, prob.50=c(lhs.nocc.prob.50,lhs.2m.prob.50) )
 
 # Make figures
-pdf('figures/p50.nocc.2m.dens.means.pdf')
-prob.50.hist <- ggplot(data=lhs.prob.50.df, aes(x=prob.50,fill=slr)) +
+#pdf('figures/p50.nocc.2m.dens.means.pdf')
+prob.50.hist <- 
+  ggplot(data=lhs.prob.50.df, aes(x=prob.50,fill=slr)) +
   aes(y=..density..) + theme_bw() +
   geom_histogram(position="identity",alpha=0.8,binwidth=0.01) +
   geom_vline(aes(xintercept = mean(lhs.nocc.prob.50))) +
-  geom_vline(aes(xintercept = mean(lhs.2m.prob.50)))
+  geom_vline(aes(xintercept = mean(lhs.2m.prob.50))) +
+  xlab("Probability of decline to 50 individuals") +
+  ylab("Density") + 
+  scale_fill_manual( values=c("grey20","grey70"),
+                     name="SLR", 
+                     breaks=c("2m","nocc"),
+                     labels=c("2m SLR", "No SLR") ) +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times") )
 print(prob.50.hist)
-dev.off()
+ggsave( filename="figures/Diss_Fig_2_12.pdf", width=6.5, height=6.5, units="in" )
+
+#dev.off()
 
 # Test to see if these results are statistically significantly
 # different
-prob.50.t.test <- t.test(lhs.nocc.prob.50,lhs.2m.prob.50)
+prob.50.t.test <- 
+  t.test(lhs.nocc.prob.50,lhs.2m.prob.50)
 ## Somewhat surprisingly to me, these differences are significant,
 ## though I wonder how much of that is driven by the sample size
 
@@ -1384,13 +1736,23 @@ length(which(snpl.10k.SA2.part$relEnds.lhs$p50.delta<=0))
 length(which(delta.p50.bootstrap<=0))
 
 ## Make figure with ggplot2
-pdf('figures/Delta.p50.Distributions.pdf')
-delta.p50.comp.plot <- ggplot( delta.p50.comp.df, aes(x=delta.p50, fill=del.p50.method) ) + 
+#pdf('figures/Delta.p50.Distributions.pdf')
+delta.p50.comp.plot <- 
+  ggplot( delta.p50.comp.df, aes(x=delta.p50, fill=del.p50.method) ) + 
   aes(y=..density..) + theme_bw() +
   geom_histogram(position="identity",alpha=0.8,binwidth=0.01) +
-  geom_vline(aes(xintercept = (mean.diff.boot)))
+  geom_vline(aes(xintercept = (mean.diff.boot))) +
+  xlab( expression( paste( Delta, "Probability of decline to 50 individuals") ) ) +
+  ylab("Density") + 
+  scale_fill_manual( values=c("grey20","grey70"),
+                     name=expression( paste( Delta, "P50 Calc. Method" ) ) ) + 
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times") )
+
 print(delta.p50.comp.plot)
-dev.off()
+#dev.off()
+
+ggsave( filename="figures/Diss_Fig_2_13.pdf", width=6.5, height=6.5, units="in" )
 
 
 
@@ -1569,7 +1931,8 @@ require(scatterplot3d)
 snpl.100.rep.SA1 <- read.csv('Results/snpl.100.rep.csv')
 snpl.100.SA1.part <- snpl.df.partition( snpl.100.rep.SA1 )
 snpl <- subset(snpl.100.SA1.part$lhs.nocc, snpl.100.SA1.part$lhs.nocc$RepNumber==1)
-pdf( 'figures/InputParameterSpace.pdf' )
+#pdf( 'figures/InputParameterSpace.pdf',width=7.5,height=7.5, family="Times", pointsize=12 )
+pdf( 'figures/Diss_Fig_2_1.pdf',width=7.5,height=7.5, family="Times", pointsize=12 )
 scatterplot3d(snpl$fecund,snpl$ad.surv,snpl$avg.corr.dist.b,
               main="Input Parameter Space",
               xlab="Fecundity",

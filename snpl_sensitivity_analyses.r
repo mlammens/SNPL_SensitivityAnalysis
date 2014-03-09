@@ -588,9 +588,32 @@ names( brt.corr.reference ) <- c( "cor.val", "samp.slr", "part.num",
 brt.corr.reference$part.num <- factor( brt.corr.reference$part.num, c('snpl.100','snpl.250','snpl.500','snpl.1000') )
 
 ## Use ggplot to have a look at our results in box-plot form
-ggplot( brt.corr.reference, aes(samp,cor.val)) + geom_boxplot() + facet_grid( slr~part.num, scales='free_y' )
+temp <- brt.corr.reference
+temp$samp <- as.character( temp$samp)
+temp$samp[ temp$samp=="lhs" ] <- "LHS"
+temp$samp[ temp$samp=="unif" ] <- "URS"
+temp$slr <- as.character( temp$slr )
+temp$slr[ temp$slr=="2m" ] <- "2m SLR"
+temp$slr[ temp$slr=="nocc" ] <- "No SLR"
+temp$slr[ temp$slr=="relEnds" ] <- "Relative"
+temp$part.num <- as.character( temp$part.num )
+temp$part.num[ temp$part.num=="snpl.100" ] <- "100"
+temp$part.num[ temp$part.num=="snpl.250" ] <- "250"
+temp$part.num[ temp$part.num=="snpl.500" ] <- "500"
+temp$part.num[ temp$part.num=="snpl.1000" ] <- "1000"
+temp$part.num <- 
+  factor( temp$part.num, c('100','250','500','1000') )
 
-ggsave(file='pearson-cor-boxplots-p50.pdf')
+ggplot( temp, aes(samp,cor.val)) + 
+  geom_boxplot() + 
+  facet_grid( slr~part.num, scales='free_y' ) +
+  ylab("Pearson Correlation Coefficient Value") +
+  xlab("Sampling Type") +
+  theme_bw() +
+  theme( text=element_text( size=12, family="Times") )
+
+#ggsave(file='pearson-cor-boxplots-p50.pdf')
+ggsave( file="figures/Diss_Fig_2_6.pdf", width=6.5, height=6.5, units="in" )
 
 ## **************************************************************##
 ## Development Work
