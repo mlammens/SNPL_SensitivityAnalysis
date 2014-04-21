@@ -1931,12 +1931,14 @@ require(scatterplot3d)
 snpl.100.rep.SA1 <- read.csv('Results/snpl.100.rep.csv')
 snpl.100.SA1.part <- snpl.df.partition( snpl.100.rep.SA1 )
 snpl <- subset(snpl.100.SA1.part$lhs.nocc, snpl.100.SA1.part$lhs.nocc$RepNumber==1)
-#pdf( 'figures/InputParameterSpace.pdf',width=7.5,height=7.5, family="Times", pointsize=12 )
-pdf( 'figures/Diss_Fig_2_1.pdf',width=7.5,height=7.5, family="Times", pointsize=12 )
+pdf( 'figures/Pres_Fig_InputParameterSpace.pdf',width=7.5,height=7.5, pointsize=20 )
+#pdf( 'figures/Diss_Fig_2_1.pdf',width=7.5,height=7.5, family="Times", pointsize=12 )
 scatterplot3d(snpl$fecund,snpl$ad.surv,snpl$avg.corr.dist.b,
-              main="Input Parameter Space",
+              #main="Input Parameter Space",
               xlab="Fecundity",
               ylab="Adult Survival",
               zlab="Inter-Population Corr",
+              zlim=c(500,3000),
+              lab=c(3,3),
               pch=20)
 dev.off()
