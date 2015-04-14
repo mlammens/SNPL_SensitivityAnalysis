@@ -7,10 +7,12 @@
 ## other R functions to create the files and run the analyses
 ## for the sensitivity analysis investigation of the snowy
 ## plover model, utilizing the sensitivity analysis scripts
-## I have been writing and implementing over the past year.
+## I have been writing and implementing over the past year(s).
 ##
 ## Much of the work that is presented here was originally
 ## developed and documented in snpl_sensitivity_worklog.R
+## That file remains in the git repository as an archive, but
+## is not necessary to replicate our results.
 ##
 ## Warnings and Caveats:
 ## - The execution of this script was carried out on the Akcakaya
