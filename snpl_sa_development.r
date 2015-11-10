@@ -824,9 +824,7 @@ anova( snpl.nn.lm )
 ## Examining variable interaction effects
 ## **************************************************************##
 ##
-## WARNING: This section requires access the BRT_Models directory,
-## which is currently on the Akcakaya-Lab Computer **or**
-## AKCAKAYA2 external drive
+## WARNING: This section requires access the BRT_Models directory
 
 ## I'm interested in looking at interactions between variables
 ## and comparing across different PartNum scenarios
