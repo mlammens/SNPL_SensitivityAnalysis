@@ -692,12 +692,12 @@ calc.cor.brt.summary <- function( part.num.list, cor.type="pearson" ) {
 
 ## P50
 #brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
-#brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
+brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
 #brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="kendall" )
 
 ## EMA
-brt.corr.complete <- lapply( brt.ema.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
-#brt.corr.complete <- lapply( brt.ema.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
+#brt.corr.complete <- lapply( brt.ema.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
+brt.corr.complete <- lapply( brt.ema.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
 #brt.corr.complete <- lapply( brt.ema.summ.df.complete, calc.cor.brt.summary, cor.type="kendall" )
 
 
