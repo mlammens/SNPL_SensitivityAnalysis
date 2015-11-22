@@ -551,8 +551,8 @@ calc.cor.brt.summary <- function( part.num.list, cor.type="pearson" ) {
   return( lapply( part.num.list, cor, method=cor.type ) )
 }
 
-brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
-#brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
+#brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
+brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
 #brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="kendall" )
 
 
@@ -607,13 +607,25 @@ temp$part.num <-
 ggplot( temp, aes(samp,cor.val)) + 
   geom_boxplot() + 
   facet_grid( slr~part.num, scales='free_y' ) +
-  ylab("Pearson Correlation Coefficient Value") +
+  #ylab("Pearson Correlation Coefficient Value") +
+  ylab("Spearman's Rank Correlation Coefficient Value") +
   xlab("Sampling Type") +
   theme_bw() +
   theme( text=element_text( size=12, family="Times") )
 
 #ggsave(file='pearson-cor-boxplots-p50.pdf')
-ggsave( file="figures/Diss_Fig_2_6.pdf", width=6.5, height=6.5, units="in" )
+#ggsave( file="figures/Diss_Fig_2_6.pdf", width=6.5, height=6.5, units="in" )
+ggsave( file="~/Dropbox/Projects/Sensitivity-Analysis/Aiello-Lammens-Akcakaya-SA/document/ConBio-Sub-2/figures/figure-2.pdf", width=6.5, height=6.5, units="in" )
+
+## Look at mean correlation values
+library(dplyr)
+
+info_recovery <-
+  temp %>% 
+  group_by(samp.slr, part.num) %>%
+  summarise(mean_cor = mean(cor.val),
+            sd_cor = sd(cor.val))
+write.csv(info_recovery, file = "p50_info_recovery.csv", row.names = FALSE)
 
 ## **************************************************************##
 ## Development Work

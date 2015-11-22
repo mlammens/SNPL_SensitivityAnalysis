@@ -60,7 +60,7 @@
 ## spin-off directory.  This directory is in my DropBox, which 
 ## means I can access it from any computer I'm working on, but the
 ## path changes depending on what system I'm on.
-sacode.snpl <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
+sacode.snpl <- '/Volumes/Garage/Projects-Archive/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
 #sacode.snpl <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
 
 ## Snowy Plover Sensitivity Analysis  directory:
@@ -69,7 +69,7 @@ sacode.snpl <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SA
 ## scripts (ie this one) are being stored in. Currently this resides
 ## in my DropBox. This var name here matches what is used 
 ## in snpl_sa_development.r as well.
-sa.sens.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/' # Linus (Mac)
+sa.sens.dir <- '/Volumes/Garage/Projects-Archive/RA-FL-Shore-Birds/SensitivityAnalysis/' # Linus (Mac)
 #sa.sens.dir <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/' # Akcakaya-Lab (Windows)
 
 ## Snowy Plover Sensitivity Analysis Results directory:
@@ -77,7 +77,7 @@ sa.sens.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/' 
 ## This is the directory/folder that all SNPL SA
 ## results are being stored in. Currently this resides
 ## in my DropBox
-snpl.SAres.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
+snpl.SAres.dir <- '/Volumes/Garage/Projects-Archive/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
 #snpl.SAres.dir <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/Results/'
 
 ## The following is a list of procedures that have been carried
@@ -692,7 +692,7 @@ calc.cor.brt.summary <- function( part.num.list, cor.type="pearson" ) {
 
 ## P50
 #brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="pearson" )
-brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
+#brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="spearman" )
 #brt.corr.complete <- lapply( brt.summ.df.complete, calc.cor.brt.summary, cor.type="kendall" )
 
 ## EMA
@@ -763,13 +763,29 @@ temp$part.num <-
 ggplot( temp, aes(samp,cor.val)) + 
   geom_boxplot() + 
   facet_grid( slr~part.num, scales='free_y' ) +
-  ylab("Pearson Correlation Coefficient Value") +
+  #ylab("Pearson Correlation Coefficient Value") +
+  ylab("Spearman's Rank Correlation Coefficient Value") +
   xlab("Sampling Type") +
   theme_bw() +
   theme( text=element_text( size=12, family="Times") )
 
 ## Save the P50 results to this file
 #ggsave( file="figures/Diss_Fig_2_10.pdf", width=6.5, height=6.5, units="in" )
+#ggsave( file="~/Dropbox/Projects/Sensitivity-Analysis/Aiello-Lammens-Akcakaya-SA/document/ConBio-Sub-2/figures/figure-s5.pdf", width=6.5, height=6.5, units="in" )
+
 
 ## Save the EMA results to this file
-ggsave( file="figures/Diss_Fig_2_11.pdf", width=6.5, height=6.5, units="in" )
+#ggsave( file="figures/Diss_Fig_2_11.pdf", width=6.5, height=6.5, units="in" )
+#ggsave( file="~/Dropbox/Projects/Sensitivity-Analysis/Aiello-Lammens-Akcakaya-SA/document/ConBio-Sub-2/figures/figure-s6.pdf", width=6.5, height=6.5, units="in" )
+
+## Look at mean correlation values
+library(dplyr)
+
+info_recovery <-
+  temp %>% 
+  group_by(samp.slr, part.num) %>%
+  summarise(mean_cor = mean(cor.val),
+            sd_cor = sd(cor.val))
+#write.csv(info_recovery, file = "p50_SA2_info_recovery.csv", row.names = FALSE)
+#write.csv(info_recovery, file = "ema_SA2_info_recovery.csv", row.names = FALSE)
+
