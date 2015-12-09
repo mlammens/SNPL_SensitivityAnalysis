@@ -18,8 +18,8 @@ require(reshape2)
 require(rgl)
 
 ## Mac
-sa.sens.dir <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/'
-sacode.snpl <- '/Users/mlammens/Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
+sa.sens.dir <- '/Volumes/Garage/Projects-Archive/RA-FL-Shore-Birds/SensitivityAnalysis/'
+sacode.snpl <- '/Volumes/Garage/Projects-Archive/RA-FL-Shore-Birds/SensitivityAnalysis/SACode_SNPL/'
 brt.dir <- '/Volumes/Garage/Projects/SnowyPlover/BRT_Models/'
 # Akcakaya Group
 #sa.sens.dir <- '/Users/Matthew/Documents/My Dropbox/RA-FL-Shore-Birds/SensitivityAnalysis/'
@@ -1670,20 +1670,27 @@ lhs.prob.50.df <- data.frame( slr=slr.scenario.vect, prob.50=c(lhs.nocc.prob.50,
 #pdf('figures/p50.nocc.2m.dens.means.pdf')
 prob.50.hist <- 
   ggplot(data=lhs.prob.50.df, aes(x=prob.50,fill=slr)) +
-  aes(y=..density..) + theme_bw() +
-  geom_histogram(position="identity",alpha=0.8,binwidth=0.01) +
-  geom_vline(aes(xintercept = mean(lhs.nocc.prob.50))) +
-  geom_vline(aes(xintercept = mean(lhs.2m.prob.50))) +
+  aes(y=..density..) + #theme_bw() +
+  geom_histogram(position="identity",alpha=0.8, binwidth=0.01) +
+  geom_vline(aes(xintercept = mean(lhs.nocc.prob.50)),
+             linetype = "dashed", size = 1.5, colour = "grey70") +
+  geom_vline(aes(xintercept = mean(lhs.2m.prob.50)),
+             linetype = "dashed", size = 1.5, colour = "grey29") +
   xlab("Probability of decline to 50 individuals") +
   ylab("Density") + 
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
   scale_fill_manual( values=c("grey20","grey70"),
                      name="SLR", 
                      breaks=c("2m","nocc"),
                      labels=c("2m SLR", "No SLR") ) +
   theme_bw() +
-  theme( text=element_text( size=12, family="Times") )
+  theme( text=element_text( size=12, family="Times"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank() )
 print(prob.50.hist)
-ggsave( filename="figures/Diss_Fig_2_12.pdf", width=6.5, height=6.5, units="in" )
+#ggsave( filename="figures/Diss_Fig_2_12.pdf", width=6.5, height=6.5, units="in" )
+ggsave( filename="~/Dropbox/Projects/Sensitivity-Analysis/Aiello-Lammens-Akcakaya-SA/document/ConBio-Sub-2/figures/figure-3A.png", width=6.5, height=6.5, units="in" )
 
 #dev.off()
 
@@ -1737,21 +1744,26 @@ length(which(delta.p50.bootstrap<=0))
 #pdf('figures/Delta.p50.Distributions.pdf')
 delta.p50.comp.plot <- 
   ggplot( delta.p50.comp.df, aes(x=delta.p50, fill=del.p50.method) ) + 
-  aes(y=..density..) + theme_bw() +
+  aes(y=..density..) + 
   geom_histogram(position="identity",alpha=0.8,binwidth=0.01) +
-  geom_vline(aes(xintercept = (mean.diff.boot))) +
+  geom_vline(aes(xintercept = (mean.diff.boot)),
+             linetype = "dashed", size = 1.5) +
   xlab( expression( paste( Delta, "Probability of decline to 50 individuals") ) ) +
   ylab("Density") + 
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(expand = c(0,0)) +
   scale_fill_manual( values=c("grey20","grey70"),
                      name=expression( paste( Delta, "P50 Calc. Method" ) ) ) + 
   theme_bw() +
-  theme( text=element_text( size=12, family="Times") )
+  theme( text=element_text( size=12, family="Times"),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank() )
 
 print(delta.p50.comp.plot)
 #dev.off()
 
-ggsave( filename="figures/Diss_Fig_2_13.pdf", width=6.5, height=6.5, units="in" )
-
+#ggsave( filename="figures/Diss_Fig_2_13.pdf", width=6.5, height=6.5, units="in" )
+ggsave( filename="~/Dropbox/Projects/Sensitivity-Analysis/Aiello-Lammens-Akcakaya-SA/document/ConBio-Sub-2/figures/figure-3B.png", width=6.5, height=6.5, units="in" )
 
 
 png('figures/Delta.p50.Distributions.png')
